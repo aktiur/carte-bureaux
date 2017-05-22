@@ -1,0 +1,35 @@
+{
+  "name": "paris-cartes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c",
+    "dev": "rollup -c -w --environment serve:true"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3-geo": "^1.6.4",
+    "d3-request": "^1.0.5",
+    "d3-selection": "^1.1.0",
+    "leaflet": "^1.0.3",
+    "lodash": "^4.17.4",
+    "topojson": "^3.0.0"
+  },
+  "devDependencies": {
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^3.19.0",
+    "ndjson-cli": "^0.3.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-css-only": "^0.2.0",
+    "rollup-plugin-json": "^2.1.1",
+    "rollup-plugin-livereload": "^0.4.0",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-serve": "^0.3.0",
+    "rollup-watch": "^3.2.2"
+  }
+}
