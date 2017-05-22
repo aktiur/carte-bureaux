@@ -1,0 +1,30 @@
+.selector {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: #c9462c;
+    min-height: 60px;
+}
+
+.selector .option {
+    padding: 19px 0;
+}
+
+.selector .option input[type='radio'] {
+    display: none;
+}
+
+.selector .option label {
+    padding: 19px 15px;
+    cursor: pointer;
+    color: #ffffff;
+    transition: all 200ms;
+}
+
+.selector .option label:hover{
+	background: #b43f27;
+}
+
+.selector .option input[type='radio']:checked + label {
+    background: #9f3723;
+}

@@ -5,5 +5,9 @@ html, body, #app {
 }
 
 .bureaux {
-    fill-opacity: .5;
+    fill-opacity: .7;
+}
+
+path.bureaux {
+    pointer-events: all !important;
 }

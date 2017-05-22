@@ -1,6 +1,8 @@
 PATH := node_modules/.bin:$(PATH)
 
-CIRCOS := 13-04 75-10
+CIRCOS_PARIS := 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
+CIRCOS_PARIS_JSON := $(addprefix data/circos/75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
+CIRCOS := 13-04 $(addprefix 75-,$(CIRCOS_PARIS))
 CIRCOS_INDEX := $(addprefix dist/,$(addsuffix /index.html,$(CIRCOS)))
 CIRCOS_SRC_JSON := $(addprefix data/circos/,$(addsuffix .geojson,$(CIRCOS)))
 CIRCOS_DIST_JSON := $(addprefix dist/,$(addsuffix /topology.json,$(CIRCOS)))
@@ -22,6 +24,7 @@ $(CIRCOS_INDEX): index.html
 	cp $< $@
 
 $(CIRCOS_DIST_JSON): dist/%/topology.json : data/circos/%.geojson
+	echo $*
 	geo2topo bureaux=$< > $@
 
 data/circos/13-04.geojson: data/13-04.ndjson data/bureaux.ndjson
@@ -32,13 +35,13 @@ data/circos/13-04.geojson: data/13-04.ndjson data/bureaux.ndjson
 data/13-04.ndjson: raw/13-04.topojson
 	topo2geo -n 13-04=$@ < $<
 
-data/circos/75-10.geojson: data/secteurs_paris.ndjson
-	ndjson-filter 'd.properties.circonscription === "10"' < $< \
+$(CIRCOS_PARIS_JSON): data/circos/75-%.geojson: data/secteurs_paris.ndjson
+	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 data/secteurs_paris.ndjson: raw/secteurs-des-bureaux-de-vote.geojson data/bureaux.ndjson
 	ndjson-split 'd.features' < $< \
-	| ndjson-map 'd.id = "75056-"+ ("0" + d.properties.arrondissement).slice(-2) + ("0" + d.properties.num_bv).slice(-2), d' \
+	| ndjson-map 'd.properties.bureau = ("0" + d.properties.arrondissement).slice(-2) + ("0" + d.properties.num_bv).slice(-2), d.id = "75056-"+ d.properties.bureau, d' \
 	| ndjson-join 'd.id' $(VOTE_ID_FRAG) - data/bureaux.ndjson \
 	| ndjson-map -r _=lodash 'Object.assign(d[0].properties, _.pick(d[1], ["statistiques", "votes", "circonscription"])),d[0]' > $@
 

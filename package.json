@@ -11,9 +11,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "d3-array": "^1.2.0",
+    "d3-axis": "^1.0.7",
+    "d3-format": "^1.2.0",
     "d3-geo": "^1.6.4",
     "d3-request": "^1.0.5",
+    "d3-scale": "^1.0.6",
+    "d3-scale-chromatic": "^1.1.1",
     "d3-selection": "^1.1.0",
+    "d3-svg-legend": "^2.24.1",
+    "d3-transition": "^1.1.0",
     "leaflet": "^1.0.3",
     "lodash": "^4.17.4",
     "topojson": "^3.0.0"
