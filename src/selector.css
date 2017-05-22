@@ -2,8 +2,8 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    background: #c9462c;
     min-height: 60px;
+    max-width: 600px;
 }
 
 .selector .option {
@@ -15,7 +15,11 @@
 }
 
 .selector .option label {
+    border-radius: 5px;
+    background: #c9462c;
+    border: 1px solid white;
     padding: 19px 15px;
+    margin: 5px;
     cursor: pointer;
     color: #ffffff;
     transition: all 200ms;

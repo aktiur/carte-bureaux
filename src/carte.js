@@ -1,7 +1,10 @@
+import polylabel from '@mapbox/polylabel';
 import {transition} from 'd3-transition';
-import {select} from 'd3-selection';
+import {select, selectAll} from 'd3-selection';
 import {geoTransform, geoPath} from 'd3-geo';
 import {addListener as addSelectorListener} from './selector';
+
+import './carte.css';
 
 export default function (bureaux, map) {
   const svg = select(map.getPanes().overlayPane).append('svg'),
@@ -15,15 +18,15 @@ export default function (bureaux, map) {
   const transform = geoTransform({point: projectPoint}),
     path = geoPath(transform);
 
-  const features = g.selectAll(".bureaux")
+  const groups = g.selectAll(".bureaux")
     .data(bureaux.features)
-    .enter().append("path")
+    .enter().append("g")
     .attr('class', 'bureaux')
     .on('click', clicked);
 
-  const points = g.selectAll('.points')
-    .data(bureaux.features)
-    .enter().append('circle')
+  const features = groups.append('path');
+
+  const points = groups.append('circle')
     .attr('opacity', '0')
     .attr('r', 0);
 
@@ -41,8 +44,15 @@ export default function (bureaux, map) {
     g.attr("transform", `translate(${-topLeft[0]},${-topLeft[1]})`);
 
     features.attr("d", path);
-    points
-      .attr('transform', d => `translate(${path.centroid(d)})`);
+    points.attr('transform', function (d) {
+        const pole = polylabel([d.geometry.coordinates[0].map(function ([x, y]) {
+          const coords = map.latLngToLayerPoint(L.latLng(y, x))
+          return [coords.x, coords.y];
+        })]);
+
+        return `translate(${pole})`;
+      }
+    );
   }
 
   function color(metric) {
@@ -72,9 +82,10 @@ export default function (bureaux, map) {
   addSelectorListener(color);
 }
 
-function clicked() {
-
-
+function clicked(d, i, nodes) {
+  selectAll(nodes)
+    .classed("selected", (_, j) => i === j);
+  select(this).raise();
   emit.apply(this, arguments);
 }
 

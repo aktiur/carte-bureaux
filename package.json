@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@mapbox/polylabel": "^1.0.2",
     "d3-array": "^1.2.0",
     "d3-axis": "^1.0.7",
     "d3-format": "^1.2.0",
@@ -32,6 +33,7 @@
     "ndjson-cli": "^0.3.0",
     "rollup": "^0.41.6",
     "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-commonjs": "^8.0.2",
     "rollup-plugin-css-only": "^0.2.0",
     "rollup-plugin-json": "^2.1.1",
     "rollup-plugin-livereload": "^0.4.0",

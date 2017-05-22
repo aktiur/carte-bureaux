@@ -3,11 +3,3 @@ html, body, #app {
     height: 100%;
     width: 100%;
 }
-
-.bureaux {
-    fill-opacity: .7;
-}
-
-path.bureaux {
-    pointer-events: all !important;
-}

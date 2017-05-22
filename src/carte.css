@@ -1,0 +1,10 @@
+
+.bureaux path {
+    fill-opacity: .7;
+    pointer-events: all !important;
+}
+
+.bureaux.selected path{
+    stroke: black;
+    stroke-width: 2;
+}
