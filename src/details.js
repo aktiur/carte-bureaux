@@ -42,7 +42,7 @@ const DetailPanel = L.Control.extend({
     elem.attr('class', 'details');
 
     const title = elem.append('h2')
-      .text('Cliquez sur une circonscription pour obtenir des détails');
+      .text('Cliquez sur un bureau pour obtenir des détails');
 
     const graph = elem.append('svg')
       .attr('width', width + labelsWidth + rightMargin)
