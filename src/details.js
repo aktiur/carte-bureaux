@@ -74,7 +74,7 @@ const DetailPanel = L.Control.extend({
       }).reverse().slice(0, 5);
 
       const data = candidats.map(function (c) {
-        return {candidat: c, score: votes[c] / exprimes};
+        return {candidat: c, score: votes[c] / exprimes, votes: votes[c]};
       });
 
       y.domain(candidats);
@@ -116,7 +116,7 @@ const DetailPanel = L.Control.extend({
         .attr('dy', '.3em')
         .merge(figures)
         .attr('y', d => y(d.candidat) + y.bandwidth() / 2)
-        .text(d => percentFormat(d.score));
+        .text(d => `${percentFormat(d.score)} (${intFormat(d.votes)})`);
 
       figures.exit().remove();
 

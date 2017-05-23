@@ -29,4 +29,6 @@ json('topology.json', function (err, topology) {
   selector({position: 'topright'}).addTo(map);
   legend({position: 'bottomleft'}).addTo(map);
   details({position: 'bottomright'}).addTo(map);
+
+  window.map = map;
 });

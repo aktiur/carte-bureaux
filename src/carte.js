@@ -1,12 +1,16 @@
 import polylabel from '@mapbox/polylabel';
 import {transition} from 'd3-transition';
-import {select, selectAll} from 'd3-selection';
+import {select, selectAll, event as d3event} from 'd3-selection';
 import {geoTransform, geoPath} from 'd3-geo';
 import {addListener as addSelectorListener} from './selector';
+
+import {basePower, baseCircleSize, baseZoomLevel} from './config';
 
 import './carte.css';
 
 export default function (bureaux, map) {
+  select('body').on("touchstart", noselect).on("touchmove", noselect);
+
   const svg = select(map.getPanes().overlayPane).append('svg'),
     g = svg.append('g').attr('class', 'leaflet-zoom-hide');
 
@@ -31,6 +35,7 @@ export default function (bureaux, map) {
     .attr('r', 0);
 
   function positionSvg() {
+    const scaleFactor = baseCircleSize * Math.pow(basePower, map.getZoom() - baseZoomLevel);
     const projectedBounds = path.bounds(bureaux),
       topLeft = projectedBounds[0],
       bottomRight = projectedBounds[1];
@@ -46,11 +51,11 @@ export default function (bureaux, map) {
     features.attr("d", path);
     points.attr('transform', function (d) {
         const pole = polylabel([d.geometry.coordinates[0].map(function ([x, y]) {
-          const coords = map.latLngToLayerPoint(L.latLng(y, x))
+          const coords = map.latLngToLayerPoint(L.latLng(y, x));
           return [coords.x, coords.y];
         })]);
 
-        return `translate(${pole})`;
+        return `matrix(${scaleFactor},0,0,${scaleFactor},${pole[0]},${pole[1]})`;
       }
     );
   }
@@ -83,10 +88,19 @@ export default function (bureaux, map) {
 }
 
 function clicked(d, i, nodes) {
+  if (d3event.defaultPrevented) {
+    return;
+  }
+
   selectAll(nodes)
     .classed("selected", (_, j) => i === j);
   select(this).raise();
   emit.apply(this, arguments);
+}
+
+function noselect() {
+  console.log('No select !');
+  d3event.preventDefault();
 }
 
 let last = null;

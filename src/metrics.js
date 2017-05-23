@@ -7,8 +7,6 @@ import {legendColor} from 'd3-svg-legend';
 
 import {percentFormat} from './config';
 
-const maxDotSize = 15;
-
 /* une métrique définit :
  *
  * - une méthode init qui prend la liste des données et initialise le domaine des échelles, par exemple
@@ -43,7 +41,7 @@ class VoteMetric {
     this.scale.domain(domain);
     this.dotScale
       .domain(rawDomain)
-      .range([maxDotSize * rawDomain[0] / rawDomain[1], maxDotSize ]);
+      .range([rawDomain[0] / rawDomain[1], 1]);
   }
 
   getDotSize(d) {
@@ -115,7 +113,7 @@ export const simpleMetrics = [
       this.scale.domain(domain);
       this.dotScale
         .domain(rawDomain)
-        .range([maxDotSize * rawDomain[0] / rawDomain[1], maxDotSize]);
+        .range([rawDomain[0] / rawDomain[1], 1]);
     },
     getDotSize(d) {
       return this.dotScale(this._getRawValue(d));

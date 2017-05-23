@@ -10,3 +10,7 @@ export const locale = formatLocale({
 
 export const percentFormat = locale.format('.1%');
 export const intFormat = locale.format(',d');
+
+export const baseCircleSize = 15;
+export const basePower = 1.7;
+export const baseZoomLevel = 15;
