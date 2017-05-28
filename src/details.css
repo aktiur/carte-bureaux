@@ -16,3 +16,8 @@
     font-size: 20px;
     font-weight: bold;
 }
+
+.details .figure.out {
+    fill: black;
+    stroke: none;
+}

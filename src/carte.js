@@ -30,9 +30,17 @@ export default function (bureaux, map) {
 
   const features = groups.append('path');
 
-  const points = groups.append('circle')
+  const centroidGroups = groups.append('g');
+
+  const points = centroidGroups.append('circle')
     .attr('opacity', '0')
-    .attr('r', 0);
+    .attr('r', 0)
+    .attr('y', -1);
+
+  const labels = centroidGroups.append('text')
+    .text((d) => d.properties.bureau)
+    .attr('text-anchor', 'middle')
+    .attr('y', 2);
 
   function positionSvg() {
     const scaleFactor = baseCircleSize * Math.pow(basePower, map.getZoom() - baseZoomLevel);
@@ -49,7 +57,7 @@ export default function (bureaux, map) {
     g.attr("transform", `translate(${-topLeft[0]},${-topLeft[1]})`);
 
     features.attr("d", path);
-    points.attr('transform', function (d) {
+    centroidGroups.attr('transform', function (d) {
         const pole = polylabel([d.geometry.coordinates[0].map(function ([x, y]) {
           const coords = map.latLngToLayerPoint(L.latLng(y, x));
           return [coords.x, coords.y];
@@ -71,7 +79,7 @@ export default function (bureaux, map) {
     if ('getDotSize' in metric) {
       points
         .transition(t)
-        .attr('opacity', 1)
+        .attr('opacity', .7)
         .attr('r', d => metric.getDotSize(d));
     } else {
       points

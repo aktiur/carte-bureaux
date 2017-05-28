@@ -8,3 +8,11 @@
     stroke: black;
     stroke-width: 2;
 }
+
+.bureaux text {
+    font-size: 1px;
+    fill: white;
+    stroke: black;
+    stroke-width: 0.02;
+    font-weight: bold;
+}

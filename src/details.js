@@ -17,7 +17,8 @@ const barColors = {
   'LE PEN': "#2f3e4b",
   'MÉLENCHON': "#ff3f19",
   'POUTOU': "#ff1f17",
-  'MACRON': '#ffc600'
+  'MACRON': '#ffc600',
+  'Abstention': '#120958'
 };
 
 const width = 300, height = 300;
@@ -26,13 +27,6 @@ const rightMargin = 20;
 
 function nomBureau(d) {
   return `Bureau n°${d.properties.bureau}`;
-}
-
-function resumeStatistiques(t) {
-  return `
-  <p><strong>Nombre d'inscrits</strong> : ${intFormat(t.inscrits)}</p>
-  <p><strong>Abstention (part des inscrits)</strong> : ${percentFormat(t.abstentions / t.inscrits)}</p>
-  `;
 }
 
 const DetailPanel = L.Control.extend({
@@ -54,14 +48,12 @@ const DetailPanel = L.Control.extend({
     const labels = results.append('g')
       .attr('class', 'axis axis--y');
 
-    const scale = results.append('g')
+    const axis = results.append('g')
       .attr('class', 'axis axis--x')
       .attr('transform', `translate(0,${height})`);
 
     const x = scaleLinear().rangeRound([0, width]);
     const y = scaleBand().rangeRound([0, height]).padding(0.1);
-
-    const statistiques = elem.append('div');
 
     function draw(feature) {
       title.text(nomBureau(feature));
@@ -73,17 +65,26 @@ const DetailPanel = L.Control.extend({
         return votes[a] - votes[b];
       }).reverse().slice(0, 5);
 
-      const data = candidats.map(function (c) {
+      const barData = candidats.map(function (c) {
         return {candidat: c, score: votes[c] / exprimes, votes: votes[c]};
       });
 
-      y.domain(candidats);
-      x.domain([0, Math.max(0.25, data[0].score)]);
+      const abstentionExprimes = feature.properties.statistiques.abstentions / feature.properties.statistiques.exprimes;
+      const correctifAbstention = feature.properties.statistiques.exprimes / feature.properties.statistiques.inscrits;
+
+      barData.push({
+        candidat: 'Abstention',
+        score: abstentionExprimes,
+        votes: feature.properties.statistiques.abstentions
+      });
+
+      y.domain(barData.map(d => d.candidat));
+      x.domain([0, Math.max(0.25, barData[0].score, abstentionExprimes)]);
 
       labels.call(axisLeft(y));
-      scale.call(axisBottom(x).ticks(5, '%'));
+      axis.call(axisBottom(x).ticks(5, '%'));
 
-      const bars = results.selectAll('.bar').data(data, function (d) {
+      const bars = results.selectAll('.bar').data(barData, function (d) {
         return d.candidat;
       });
 
@@ -105,7 +106,7 @@ const DetailPanel = L.Control.extend({
 
       bars.exit().remove();
 
-      const figures = results.selectAll('.figure').data(data, function (d) {
+      const figures = results.selectAll('.figure').data(barData, function (d) {
         return d.candidat;
       });
 
@@ -115,12 +116,23 @@ const DetailPanel = L.Control.extend({
         .attr('dx', 10)
         .attr('dy', '.3em')
         .merge(figures)
+        .text(d => {
+          if (d.candidat === 'Abstention')
+            return `${percentFormat(d.score * correctifAbstention)} ins. (${intFormat(d.votes)})`;
+          return `${percentFormat(d.score)} (${intFormat(d.votes)})`;
+        })
         .attr('y', d => y(d.candidat) + y.bandwidth() / 2)
-        .text(d => `${percentFormat(d.score)} (${intFormat(d.votes)})`);
+        .attr('x', function (d) {
+          if (this.getBBox().width + 10 > x(d.score)) {
+            return x(d.score);
+          }
+          return 0;
+        })
+        .classed('out', function (d) {
+          return this.getBBox().width + 10 > x(d.score);
+        });
 
       figures.exit().remove();
-
-      statistiques.html(resumeStatistiques(feature.properties.statistiques));
     }
 
     addListener(draw);
@@ -132,4 +144,6 @@ const DetailPanel = L.Control.extend({
   }
 });
 
-export default function(opts) { return new DetailPanel(opts); }
+export default function (opts) {
+  return new DetailPanel(opts);
+}

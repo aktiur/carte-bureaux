@@ -4,8 +4,8 @@ import sys
 headers_correct = {
     'Code du département': 'departement',
     'Libellé du département': 'departement_libelle',
-    'Code de la circonscription': 'circo',
-    'Libellé de la circonscription': 'circo_libelle',
+    'Code de la circonscription': 'circonscription',
+    'Libellé de la circonscription': 'circonscription_libelle',
     'Code de la commune': 'commune',
     'Libellé de la commune': 'commune_libelle',
     'Code du b.vote': 'bureau',
