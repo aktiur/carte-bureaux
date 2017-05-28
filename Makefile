@@ -39,7 +39,7 @@ $(CIRCOS_PARIS_JSON): data/circos/75-%.geojson: data/secteurs_paris.ndjson
 	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
-data/secteurs_paris.ndjson: raw/secteurs-des-bureaux-de-vote.geojson data/bureaux.ndjson
+data/secteurs_paris.ndjson: raw/opendata_paris/secteurs-des-bureaux-de-vote.geojson data/bureaux.ndjson
 	ndjson-split 'd.features' < $< \
 	| ndjson-map 'd.properties.bureau = ("0" + d.properties.arrondissement).slice(-2) + ("0" + d.properties.num_bv).slice(-2), d.id = "75056-"+ d.properties.bureau, d' \
 	| ndjson-join 'd.id' $(VOTE_ID_FRAG) - data/bureaux.ndjson \
@@ -49,7 +49,7 @@ data/bureaux.ndjson: data/2017_cleaned.csv
 	csv2json -n $< \
 	| ndjson-map -r _=lodash $(VOTE_MAPPING) > $@
 
-data/2017_cleaned.csv: raw/PR17_BVot_T1_FE.txt
+data/2017_cleaned.csv: raw/data_gouv_fr/PR17_BVot_T1_FE.txt
 	python scripts/clean_2017.py $< > $@
 
 clean:
