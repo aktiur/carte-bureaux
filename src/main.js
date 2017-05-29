@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 
 import {json} from 'd3-request';
 import {extent} from 'd3-array';
-import {scaleLinear} from 'd3-scale';
+import {scaleSqrt} from 'd3-scale';
 import {feature} from 'topojson';
 
 import selector from './selector';
@@ -46,8 +46,9 @@ json('topology.json', function (err, topology) {
   ).addTo(map);
 
   const hlms = feature(topology, topology.objects.hlms);
-  const hlmSize = scaleLinear()
-    .range([10, 20])
+  hlms.features.sort((a, b) => a > b ? -1 : a < b ? -1 : 0);
+  const hlmSize = scaleSqrt()
+    .range([5, 20])
     .domain(extent(hlms.features.map(d => d.properties.nombre_total_de_logements_finances)));
 
   const hlmMarkers = hlms.features.map(f => {
