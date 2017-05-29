@@ -9,12 +9,13 @@ import {basePower, baseCircleSize, baseZoomLevel} from './config';
 import './carte.css';
 
 const Carte = L.Layer.extend({
-  initialize: function (bureaux) {
+  initialize: function (bureaux, options) {
     this.bureaux = bureaux;
+    L.Util.setOptions(this, options);
   },
   onAdd: function (map) {
     const bureaux = this.bureaux;
-    const svg = this.svg = select(map.getPanes().overlayPane).append('svg'),
+    const svg = this.svg = select(map.getPane(this.options.pane)).append('svg'),
       g = svg.append('g').attr('class', 'leaflet-zoom-hide');
 
     function projectPoint(x, y) {
@@ -25,15 +26,21 @@ const Carte = L.Layer.extend({
     const transform = geoTransform({point: projectPoint}),
       path = geoPath(transform);
 
-    const groups = g.selectAll(".bureaux")
-      .data(this.bureaux.features)
+    const groups = g.append('g')
+      .selectAll(".bureaux")
+      .data(bureaux.features)
       .enter().append("g")
       .attr('class', 'bureaux')
       .on('click', clicked);
 
     const features = groups.append('path');
 
-    const centroidGroups = groups.append('g');
+    const centroidGroups = g.append('g')
+      .selectAll('.centroids')
+      .data(bureaux.features)
+      .enter()
+      .append('g')
+      .attr('class', 'centroids');
 
     const points = centroidGroups.append('circle')
       .attr('opacity', '0')

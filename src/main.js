@@ -28,6 +28,8 @@ json('topology.json', function (err, topology) {
   const map = L.map('app').fitBounds(leafletBounds)
     .addLayer(L.tileLayer(tileURL));
 
+  map.createPane('circles');
+
   const carteLayer = carte(secteurs).addTo(map);
   selector({position: 'topright'}).addTo(map);
   legend({position: 'bottomleft'}).addTo(map);
@@ -48,16 +50,17 @@ json('topology.json', function (err, topology) {
     .range([10, 20])
     .domain(extent(hlms.features.map(d => d.properties.nombre_total_de_logements_finances)));
 
-  const hlmLayer = L.geoJSON(
-    hlms,
-    {
-      pointToLayer: function (feature, latlng) {
-        return L.circleMarker(latlng, {
-          radius: hlmSize(feature.properties.nombre_total_de_logements_finances)
-        }).bindPopup(hlmPopup(feature));
-      }
-    }
-  );
+  const hlmMarkers = hlms.features.map(f => {
+    const coords = f.geometry.coordinates;
+    const latlng = L.latLng(coords[1], coords[0]);
+
+    return L.circleMarker(latlng, {
+      radius: hlmSize(f.properties.nombre_total_de_logements_finances),
+      pane: 'circles'
+    }).bindPopup(hlmPopup(f));
+  });
+
+  const hlmLayer = L.layerGroup(hlmMarkers);
 
   L.control.layers(
     null,
