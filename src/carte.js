@@ -98,8 +98,8 @@ const Carte = L.Layer.extend({
 
   getEvents: function() {
     return {
-      viewreset: this.positionSvg,
-      zoom: this.positionSvg,
+      viewreset: () => this.positionSvg(),
+      zoom: () => this.positionSvg(),
     };
   },
 

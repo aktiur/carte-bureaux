@@ -48,8 +48,6 @@ json('topology.json', function (err, topology) {
     .range([10, 20])
     .domain(extent(hlms.features.map(d => d.properties.nombre_total_de_logements_finances)));
 
-  console.log(extent(hlms.features.map(d => d.properties.nombre_total_de_logements_finances)));
-
   const hlmLayer = L.geoJSON(
     hlms,
     {
