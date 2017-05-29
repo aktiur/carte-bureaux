@@ -28,7 +28,7 @@ json('topology.json', function (err, topology) {
   const map = L.map('app').fitBounds(leafletBounds)
     .addLayer(L.tileLayer(tileURL));
 
-  carte(secteurs, map);
+  const carteLayer = carte(secteurs).addTo(map);
   selector({position: 'topright'}).addTo(map);
   legend({position: 'bottomleft'}).addTo(map);
   details({position: 'bottomright'}).addTo(map);
@@ -61,7 +61,10 @@ json('topology.json', function (err, topology) {
     }
   );
 
-  L.control.layers(null, {'Bureaux': bureaux, 'Logements sociaux': hlmLayer}, {position: 'topleft'}).addTo(map);
+  L.control.layers(
+    null,
+    {'Secteurs': carteLayer, 'Bureaux': bureaux, 'Logements sociaux': hlmLayer},
+    {position: 'topleft'}).addTo(map);
 
   window.map = map;
 });
