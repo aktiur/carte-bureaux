@@ -43,7 +43,10 @@ data/13-04.ndjson: raw/13-04.topojson
 	topo2geo -n 13-04=$@ < $<
 
 $(CIRCOS_PARIS_HLMS): data/circos/hlms-75-%.geojson: raw/opendata_paris/logements_sociaux_finances_a_paris.geojson data/circos/secteurs-75-%.geojson |data/circos
-	python scripts/included_points.py raw/opendata_paris/logements_sociaux_finances_a_paris.geojson data/circos/secteurs-75-$*.geojson > $@
+	python scripts/included_points.py raw/opendata_paris/logements_sociaux_finances_a_paris.geojson data/circos/secteurs-75-$*.geojson \
+	| ndjson-split 'd.features' \
+	| ndjson-filter 'd.properties.nombre_total_de_logements_finances > 5' \
+	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 $(CIRCOS_PARIS_BUREAUX): data/circos/bureaux-75-%.geojson: data/bureaux_paris.ndjson |data/circos
 	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
