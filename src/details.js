@@ -2,7 +2,7 @@ import {scaleLinear, scaleBand} from 'd3-scale';
 import {axisLeft, axisBottom} from 'd3-axis';
 import {select} from 'd3-selection';
 import {percentFormat, intFormat} from './config';
-import {addListener} from './carte';
+import {addListener, removeListener} from './carte';
 
 import './details.css';
 
@@ -31,7 +31,11 @@ function nomBureau(d) {
 
 const DetailPanel = L.Control.extend({
   onAdd: function () {
-    const elem = select(L.DomUtil.create('div'));
+    const elem = this.elem = select(L.DomUtil.create('div'));
+    this.toggleButton = elem.append('button')
+      .attr('class', 'toggle')
+      .text('>>')
+      .on('click', () => this.toggle());
 
     elem.attr('class', 'details');
 
@@ -55,7 +59,7 @@ const DetailPanel = L.Control.extend({
     const x = scaleLinear().rangeRound([0, width]);
     const y = scaleBand().rangeRound([0, height]).padding(0.1);
 
-    function draw(feature) {
+    this.draw = function draw(feature) {
       title.text(nomBureau(feature));
 
       const votes = feature.properties.votes;
@@ -133,14 +137,22 @@ const DetailPanel = L.Control.extend({
         });
 
       figures.exit().remove();
-    }
+    };
 
-    addListener(draw);
+    addListener(this.draw);
 
     return elem.node();
   },
-  onRemove: function () {
 
+  toggle() {
+    const state = this.elem.classed('hide');
+    this.elem
+      .classed('hide', !this.elem.classed('hide'));
+    this.toggleButton.text(state ? ">>" : "<<");
+  },
+
+  onRemove: function () {
+    removeListener(this.draw);
   }
 });
 

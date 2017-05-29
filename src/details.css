@@ -3,6 +3,32 @@
     padding: 30px;
     border: 1px solid black;
     background-color: white;
+    position: relative;
+}
+
+.details.hide {
+    padding: 0;
+}
+
+.details.hide * {
+    display: none;
+}
+
+.details .toggle {
+    font-size: 30px;
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+    border-radius: 0;
+    border: none;
+}
+
+.details.hide .toggle {
+    display: block;
+    position: inherit;
+
 }
 
 .details h2 {

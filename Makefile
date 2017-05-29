@@ -3,6 +3,7 @@ PATH := node_modules/.bin:$(PATH)
 CIRCOS_PARIS := 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
 CIRCOS_PARIS_SECTEURS := $(addprefix data/circos/secteurs-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
 CIRCOS_PARIS_BUREAUX := $(addprefix data/circos/bureaux-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
+CIRCOS_PARIS_HLMS := $(addprefix data/circos/hlms-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
 CIRCOS := 13-04 $(addprefix 75-,$(CIRCOS_PARIS))
 CIRCOS_INDEX := $(addprefix dist/,$(addsuffix /index.html,$(CIRCOS)))
 CIRCOS_SRC_SECTEURS := $(addprefix data/circos/secteurs-,$(addsuffix .geojson,$(CIRCOS)))
@@ -16,7 +17,7 @@ VOTE_MAPPING := '{ \
   votes: _.mapValues(_.pick(d, Object.keys(d).slice(13)), function(n){return +n;}) \
 }'
 
-all: $(CIRCOS_DIR) $(CIRCOS_INDEX) $(CIRCOS_DIST_TOPOLOGY)
+all: $(CIRCOS_DIR) $(CIRCOS_INDEX) $(CIRCOS_DIST_TOPOLOGY) dist/images
 
 $(CIRCOS_DIR) data/circos:
 	mkdir -p $@
@@ -27,10 +28,10 @@ $(CIRCOS_INDEX): index.html
 dist/images: images/
 	cp -r $< $@
 
-$(CIRCOS_DIST_TOPOLOGY): dist/%/topology.json : data/circos/secteurs-%.geojson data/circos/bureaux-%.geojson
-	geo2topo secteurs=data/circos/secteurs-$*.geojson bureaux=data/circos/bureaux-$*.geojson > $@
+$(CIRCOS_DIST_TOPOLOGY): dist/%/topology.json : data/circos/secteurs-%.geojson data/circos/bureaux-%.geojson data/circos/hlms-%.geojson
+	geo2topo secteurs=data/circos/secteurs-$*.geojson bureaux=data/circos/bureaux-$*.geojson hlms=data/circos/hlms-$*.geojson > $@
 
-data/circos/bureaux-13-04.geojson:
+data/circos/bureaux-13-04.geojson data/circos/hlms-13-04.geojson:
 	echo '{"type": "FeatureCollection", "features": []}' > $@
 
 data/circos/secteurs-13-04.geojson: data/13-04.ndjson data/bureaux.ndjson |data/circos
@@ -40,6 +41,9 @@ data/circos/secteurs-13-04.geojson: data/13-04.ndjson data/bureaux.ndjson |data/
 
 data/13-04.ndjson: raw/13-04.topojson
 	topo2geo -n 13-04=$@ < $<
+
+$(CIRCOS_PARIS_HLMS): data/circos/hlms-75-%.geojson: raw/opendata_paris/logements_sociaux_finances_a_paris.geojson data/circos/secteurs-75-%.geojson |data/circos
+	python scripts/included_points.py raw/opendata_paris/logements_sociaux_finances_a_paris.geojson data/circos/secteurs-75-$*.geojson > $@
 
 $(CIRCOS_PARIS_BUREAUX): data/circos/bureaux-75-%.geojson: data/bureaux_paris.ndjson |data/circos
 	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
