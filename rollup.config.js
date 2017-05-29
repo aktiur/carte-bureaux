@@ -5,6 +5,7 @@ import css from 'rollup-plugin-css-only';
 import babel from 'rollup-plugin-babel';
 import serve from 'rollup-plugin-serve';
 import liveReload from 'rollup-plugin-livereload';
+import uglify from 'rollup-plugin-uglify';
 
 const plugins = [
   css({
@@ -23,6 +24,8 @@ if (process.env.serve === 'true') {
     serve('dist'),
     liveReload()
   );
+} else {
+  plugins.push(uglify());
 }
 
 export default {
