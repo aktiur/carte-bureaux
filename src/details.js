@@ -21,7 +21,7 @@ const barColors = {
   'Abstention': '#120958'
 };
 
-const width = 300, height = 300;
+const width = 280, height = 300;
 const labelsWidth = 80, scaleHeight = 20;
 const rightMargin = 20;
 
@@ -39,8 +39,7 @@ const DetailPanel = L.Control.extend({
 
     elem.attr('class', 'details');
 
-    const title = elem.append('h2')
-      .text('Cliquez sur un bureau pour obtenir des détails');
+    const title = elem.append('h2').text('Détails...');
 
     const graph = elem.append('svg')
       .attr('width', width + labelsWidth + rightMargin)

@@ -9,8 +9,8 @@ const Legend = L.Control.extend({
       .attr('class', 'legend');
 
     const svg = div.append('svg')
-      .attr('width', 170)
-      .attr('height', 280);
+      .attr('width', 130)
+      .attr('height', 250);
 
     let g = null;
 
@@ -19,7 +19,7 @@ const Legend = L.Control.extend({
 
       g = svg.append('g')
         .attr('class', 'legendLinear')
-        .attr('transform', 'translate(20,20)');
+        .attr('transform', 'translate(10,10)');
 
       const legend = metric.getLegend()
         .orient('vertical')

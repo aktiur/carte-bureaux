@@ -2,12 +2,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    min-height: 60px;
     max-width: 600px;
-}
-
-.selector .option {
-    padding: 19px 0;
 }
 
 .selector .option input[type='radio'] {
@@ -15,11 +10,12 @@
 }
 
 .selector .option label {
+    display: block;
     border-radius: 5px;
     background: #c9462c;
     border: 1px solid white;
-    padding: 19px 15px;
-    margin: 5px;
+    padding: 8px 5px;
+    margin: 2px;
     cursor: pointer;
     color: #ffffff;
     transition: all 200ms;

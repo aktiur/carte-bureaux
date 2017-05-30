@@ -1,8 +1,9 @@
 .details {
     max-width: 400px;
-    padding: 30px;
+    padding: 5px;
     border: 1px solid black;
-    background-color: white;
+    border-radius: 10px;
+    background-color: rgba(255,255,255,.7);
     position: relative;
 }
 
@@ -21,7 +22,7 @@
     top: 0;
     right: 0;
     cursor: pointer;
-    border-radius: 0;
+    border-radius: 10px;
     border: none;
 }
 

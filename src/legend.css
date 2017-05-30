@@ -1,6 +1,6 @@
 .legend {
     border: 1px solid;
-    background-color: #FFF;
+    background-color: rgba(255,255,255, 1);
 }
 
 .legend rect.swatch {
