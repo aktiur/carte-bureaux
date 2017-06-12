@@ -2,11 +2,16 @@
 .bureaux path {
     fill-opacity: .7;
     pointer-events: all !important;
+    cursor: pointer;
 }
 
 .bureaux.selected path{
     stroke: black;
     stroke-width: 2;
+}
+
+.centroids {
+    cursor: pointer;
 }
 
 .centroids text {

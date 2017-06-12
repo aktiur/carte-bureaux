@@ -30,7 +30,7 @@ const Carte = L.Layer.extend({
       .selectAll(".bureaux")
       .data(bureaux.features)
       .enter().append("g")
-      .attr('class', 'bureaux')
+      .attr('class', d => 'bureaux n' + d.properties.bureau)
       .on('click', clicked);
 
     const features = groups.append('path');
@@ -40,7 +40,8 @@ const Carte = L.Layer.extend({
       .data(bureaux.features)
       .enter()
       .append('g')
-      .attr('class', 'centroids');
+      .attr('class', 'centroids')
+      .on('click', clicked);
 
     const points = centroidGroups.append('circle')
       .attr('opacity', '0')
@@ -121,13 +122,12 @@ export default function(bureaux, opts) {
 }
 
 function clicked(d, i, nodes) {
-  if (d3event.defaultPrevented) {
-    return;
-  }
+  selectAll(".bureaux")
+    .classed("selected", false);
 
-  selectAll(nodes)
-    .classed("selected", (_, j) => i === j);
-  select(this).raise();
+  selectAll(".bureaux.n" + d.properties.bureau)
+    .classed("selected", true)
+    .raise();
   emit.apply(this, arguments);
 }
 
