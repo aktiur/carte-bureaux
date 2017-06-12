@@ -4,7 +4,7 @@ CIRCOS_PARIS := 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18
 CIRCOS_PARIS_SECTEURS := $(addprefix data/circos/secteurs-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
 CIRCOS_PARIS_BUREAUX := $(addprefix data/circos/bureaux-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
 CIRCOS_PARIS_HLMS := $(addprefix data/circos/hlms-75-,$(addsuffix .geojson,$(CIRCOS_PARIS)))
-CIRCOS := 13-04 $(addprefix 75-,$(CIRCOS_PARIS))
+CIRCOS := 13-04 $(addprefix 75-,$(CIRCOS_PARIS)) 75-complet
 CIRCOS_INDEX := $(addprefix dist/,$(addsuffix /index.html,$(CIRCOS)))
 CIRCOS_SRC_SECTEURS := $(addprefix data/circos/secteurs-,$(addsuffix .geojson,$(CIRCOS)))
 CIRCOS_DIST_TOPOLOGY := $(addprefix dist/,$(addsuffix /topology.json,$(CIRCOS)))
@@ -31,7 +31,7 @@ dist/images: images/
 $(CIRCOS_DIST_TOPOLOGY): dist/%/topology.json : data/circos/secteurs-%.geojson data/circos/bureaux-%.geojson data/circos/hlms-%.geojson
 	geo2topo secteurs=data/circos/secteurs-$*.geojson bureaux=data/circos/bureaux-$*.geojson hlms=data/circos/hlms-$*.geojson > $@
 
-data/circos/bureaux-13-04.geojson data/circos/hlms-13-04.geojson:
+data/circos/bureaux-13-04.geojson data/circos/hlms-13-04.geojson data/circos/hlms-75-complet.geojson:
 	echo '{"type": "FeatureCollection", "features": []}' > $@
 
 data/circos/secteurs-13-04.geojson: data/13-04.ndjson data/bureaux.ndjson |data/circos
@@ -48,9 +48,15 @@ $(CIRCOS_PARIS_HLMS): data/circos/hlms-75-%.geojson: raw/opendata_paris/logement
 	| ndjson-filter 'd.properties.nombre_total_de_logements_finances > 5' \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
+data/circos/bureaux-75-complet.geojson: data/bureaux_paris.ndjson |data/circos
+	ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' < $< > $@
+
 $(CIRCOS_PARIS_BUREAUX): data/circos/bureaux-75-%.geojson: data/bureaux_paris.ndjson |data/circos
 	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
+
+data/circos/secteurs-75-complet.geojson: data/secteurs_paris.ndjson |data/circos
+	ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' < $< > $@
 
 $(CIRCOS_PARIS_SECTEURS): data/circos/secteurs-75-%.geojson: data/secteurs_paris.ndjson |data/circos
 	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
