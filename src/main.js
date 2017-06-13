@@ -6,6 +6,7 @@ import {json} from 'd3-request';
 import {extent} from 'd3-array';
 import {scaleSqrt} from 'd3-scale';
 import {feature} from 'topojson';
+import {select} from 'd3-selection';
 
 import selector from './selector';
 import legend from './legend';
@@ -13,9 +14,14 @@ import carte from './carte';
 import details from './details';
 import {tileURL} from './config';
 
+
 json('topology.json', function (err, topology) {
   if (err) {
     throw err;
+  }
+
+  if (L.Browser.mobile) {
+    select('body').classed('mobile', true);
   }
 
   const leafletBounds = L.latLngBounds(

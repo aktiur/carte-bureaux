@@ -6,3 +6,24 @@
 .legend rect.swatch {
     fill-opacity: .7;
 }
+
+.legend .toggle {
+    display: none;
+}
+
+.mobile .legend .toggle {
+    font-size: 30px;
+    display: block;
+    cursor: pointer;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.mobile .legend svg {
+    display: none
+}
+
+.mobile .legend.touched svg {
+    display: block;
+}
