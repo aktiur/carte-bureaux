@@ -10,12 +10,7 @@ CIRCOS_SRC_SECTEURS := $(addprefix data/circos/secteurs-,$(addsuffix .geojson,$(
 CIRCOS_DIST_TOPOLOGY := $(addprefix dist/,$(addsuffix /topology.json,$(CIRCOS)))
 CIRCOS_DIR := $(addprefix dist/,$(CIRCOS))
 
-VOTE_MAPPING := '{ \
-  id: d.departement + d.commune + "-" + d.bureau, \
-  circonscription: d.circonscription, \
-  statistiques: _.mapValues(_.pick(d, Object.keys(d).slice(7, 13)), function(n){return +n;}), \
-  votes: _.mapValues(_.pick(d, Object.keys(d).slice(13)), function(n){return +n;}) \
-}'
+
 
 all: $(CIRCOS_DIR) $(CIRCOS_INDEX) $(CIRCOS_DIST_TOPOLOGY) dist/images
 
@@ -35,8 +30,8 @@ data/circos/bureaux-13-04.geojson data/circos/hlms-13-04.geojson data/circos/hlm
 	echo '{"type": "FeatureCollection", "features": []}' > $@
 
 data/circos/secteurs-13-04.geojson: data/13-04.ndjson data/bureaux.ndjson |data/circos
-	ndjson-join 'd.id' $(VOTE_ID_FRAG) data/13-04.ndjson data/bureaux.ndjson \
-	| ndjson-map -r _=lodash 'Object.assign(d[0].properties, _.pick(d[1], ["statistiques", "votes"])),d[0]' \
+	ndjson-join 'd.id' 'd.departement + d.commune + "-" + d.bureau' data/13-04.ndjson data/bureaux.ndjson \
+	| ndjson-map 'd[0].properties = d[1], d[0]' \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 data/13-04.ndjson: raw/13-04.topojson
@@ -52,14 +47,14 @@ data/circos/bureaux-75-complet.geojson: data/bureaux_paris.ndjson |data/circos
 	ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' < $< > $@
 
 $(CIRCOS_PARIS_BUREAUX): data/circos/bureaux-75-%.geojson: data/bureaux_paris.ndjson |data/circos
-	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
+	ndjson-filter 'd.properties.circonscription === +"$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 data/circos/secteurs-75-complet.geojson: data/secteurs_paris.ndjson |data/circos
 	ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' < $< > $@
 
 $(CIRCOS_PARIS_SECTEURS): data/circos/secteurs-75-%.geojson: data/secteurs_paris.ndjson |data/circos
-	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
+	ndjson-filter 'd.properties.circonscription === +"$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 data/bureaux_paris.ndjson: data/bureaux_paris.csv
@@ -72,22 +67,31 @@ data/bureaux_paris.csv: raw/opendata_paris/bureaux-de-votes.csv data/2017_pres_c
 data/secteurs_paris.ndjson: raw/opendata_paris/secteurs-des-bureaux-de-vote.geojson data/bureaux.ndjson
 	ndjson-split 'd.features' < $< \
 	| ndjson-map 'd.properties.bureau = ("0" + d.properties.arrondissement).slice(-2) + ("0" + d.properties.num_bv).slice(-2), d.id = "75056-"+ d.properties.bureau, d' \
-	| ndjson-join 'd.id' $(VOTE_ID_FRAG) - data/bureaux.ndjson \
-	| ndjson-map -r _=lodash 'Object.assign(d[0].properties, _.pick(d[1], ["statistiques", "votes", "circonscription"])),d[0]' > $@
+	| ndjson-join 'd.id' 'd.departement + d.commune + "-" + d.bureau' - data/bureaux.ndjson \
+	| ndjson-map 'd[0].properties = d[1], d[0]' > $@
 
-data/bureaux.ndjson: data/2017_pres_cleaned.csv
-	csv2json -n $< \
-	| ndjson-map -r _=lodash $(VOTE_MAPPING) > $@
+
+JOIN_SCRUTINS := 'Object.assign( \
+	{ \
+		presidentielle: _.pick(d[0], ["inscrits", "votants", "exprimes", "blancs", "candidats"]), \
+		legislatives: _.pick(d[1], ["inscrits", "votants", "exprimes", "blancs", "candidats"]), \
+	}, \
+	_.pick(d[0], ["departement", "commune", "circonscription", "bureau"]))'
+
+data/bureaux.ndjson: data/presidentielle.ndjson data/legislatives.ndjson
+	ndjson-join 'd.departement+d.commune+d.bureau' $^ \
+	| ndjson-map -r _=lodash $(JOIN_SCRUTINS) > $@
+
+# legislatives
+data/legislatives.ndjson: raw/data_gouv_fr/Leg_2017_Resultats_BVT_T1_c.txt
+	python scripts/scrutin_to_ndjson.py $< > $@
+
+# presidentielle
+data/presidentielle.ndjson: raw/data_gouv_fr/PR17_BVot_T1_FE.txt
+	python scripts/scrutin_to_ndjson.py $< > $@
 
 data/2017_pres_cleaned.csv: raw/data_gouv_fr/PR17_BVot_T1_FE.txt scripts/clean_pres_2017.py
 	python scripts/clean_pres_2017.py $< > $@
-
-# Legislatives 2017
-data/2017_legi_nuances.csv: data/2017_legi_cleaned.csv
-	python scripts/aggregate_legi_2017.py $< > $@
-
-data/2017_legi_cleaned.csv: raw/data_gouv_fr/Leg_2017_Resultats_BVT_T1_c.txt
-	python scripts/clean_legi_2017.py $< > $@
 
 clean:
 	rm -rf data/* secteurs.svg
