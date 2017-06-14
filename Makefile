@@ -93,5 +93,8 @@ data/presidentielle.ndjson: raw/data_gouv_fr/PR17_BVot_T1_FE.txt
 data/2017_pres_cleaned.csv: raw/data_gouv_fr/PR17_BVot_T1_FE.txt scripts/clean_pres_2017.py
 	python scripts/clean_pres_2017.py $< > $@
 
+data/2017_legi_cleaned.csv: raw/data_gouv_fr/Leg_2017_Resultats_BVT_T1_c.txt
+	python scripts/clean_legi_2017.py $< > $@
+
 clean:
 	rm -rf data/* secteurs.svg

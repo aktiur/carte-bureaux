@@ -2,16 +2,20 @@ import polylabel from '@mapbox/polylabel';
 import {transition} from 'd3-transition';
 import {select, selectAll, event as d3event} from 'd3-selection';
 import {geoTransform, geoPath} from 'd3-geo';
-import {addListener as addSelectorListener, removeListener as removeSelectorListener} from './selector';
+import {ReplaySubject} from 'rxjs/ReplaySubject';
 
 import {basePower, baseCircleSize, baseZoomLevel} from './config';
 
 import './carte.css';
 
 const Carte = L.Layer.extend({
-  initialize: function (bureaux, options) {
+  initialize: function (bureaux, metricObservable, options) {
     this.bureaux = bureaux;
+    this.metricObservable = metricObservable;
+    this.bureauObservable = new ReplaySubject(1);
     L.Util.setOptions(this, options);
+
+    this.onClicked = this.onClicked.bind(this);
   },
   onAdd: function (map) {
     const bureaux = this.bureaux;
@@ -31,7 +35,7 @@ const Carte = L.Layer.extend({
       .data(bureaux.features)
       .enter().append("g")
       .attr('class', d => 'bureaux n' + d.properties.bureau)
-      .on('click', clicked);
+      .on('click', this.onClicked);
 
     const features = groups.append('path');
 
@@ -41,7 +45,7 @@ const Carte = L.Layer.extend({
       .enter()
       .append('g')
       .attr('class', 'centroids')
-      .on('click', clicked);
+      .on('click', this.onClicked);
 
     const points = centroidGroups.append('circle')
       .attr('opacity', '0')
@@ -79,7 +83,7 @@ const Carte = L.Layer.extend({
       );
     };
 
-    this.rescale = function(metric) {
+    function rescale(metric) {
       const t = transition('color').duration(750);
       metric.init(bureaux.features);
 
@@ -98,13 +102,13 @@ const Carte = L.Layer.extend({
           .attr('opacity', 0)
           .attr('r', 0);
       }
-    };
+    }
 
     this.positionSvg();
-    addSelectorListener(this.rescale);
+    this.subscription = this.metricObservable.subscribe(rescale);
   },
 
-  getEvents: function() {
+  getEvents: function () {
     return {
       viewreset: () => this.positionSvg(),
       zoom: () => this.positionSvg(),
@@ -112,47 +116,22 @@ const Carte = L.Layer.extend({
   },
 
   onRemove: function () {
-    removeSelectorListener(this.rescale);
+    this.subscription.unsubscribe();
     this.svg.remove();
+  },
+
+  onClicked: function (d) {
+    selectAll(".bureaux")
+      .classed("selected", false);
+
+    selectAll(".bureaux.n" + d.properties.bureau)
+      .classed("selected", true)
+      .raise();
+
+    this.bureauObservable.next(d.properties);
   }
 });
 
-export default function(bureaux, opts) {
+export default function (bureaux, opts) {
   return new Carte(bureaux, opts);
-}
-
-function clicked(d, i, nodes) {
-  selectAll(".bureaux")
-    .classed("selected", false);
-
-  selectAll(".bureaux.n" + d.properties.bureau)
-    .classed("selected", true)
-    .raise();
-  emit.apply(this, arguments);
-}
-
-let last = null;
-const listeners = [];
-
-function emit(d) {
-  last = d;
-  for (let listener of listeners) {
-    listener(d);
-  }
-}
-
-export function addListener(listener) {
-  listeners.push(listener);
-  if (last) {
-    setTimeout(function () {
-      listener(last);
-    }, 0);
-  }
-}
-
-export function removeListener(listener) {
-  if (!(listener in listeners)) {
-    return;
-  }
-  listeners.splice(listeners.indexOf(listener), 1);
 }

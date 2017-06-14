@@ -25,6 +25,7 @@
     "d3-transition": "^1.1.0",
     "leaflet": "^1.0.3",
     "lodash": "^4.17.4",
+    "rxjs": "^5.4.0",
     "topojson": "^3.0.0"
   },
   "devDependencies": {

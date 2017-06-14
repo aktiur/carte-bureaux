@@ -1,35 +1,32 @@
 import {scaleLinear, scaleBand} from 'd3-scale';
 import {axisLeft, axisBottom} from 'd3-axis';
 import {select} from 'd3-selection';
-import {percentFormat, intFormat} from './config';
-import {addListener, removeListener} from './carte';
+import {Observable} from 'rxjs/Observable';
+
+import {percentFormat, intFormat, nuanceColors} from './config';
 
 import './details.css';
 
-const barColors = {
-  'ARTHAUD': "#c41114",
-  'ASSELINEAU': "#057c85",
-  'CHEMINADE': "#e53517",
-  'DUPONT-AIGNAN': "#39394b",
-  'FILLON': "#23408f",
-  'HAMON': "#e0003c",
-  'LASSALLE': "#ff9632",
-  'LE PEN': "#2f3e4b",
-  'MÉLENCHON': "#ff3f19",
-  'POUTOU': "#ff1f17",
-  'MACRON': '#ffc600',
-  'Abstention': '#120958'
-};
-
-const width = 280, height = 300;
-const labelsWidth = 80, scaleHeight = 20;
+const width = 260, height = 300;
+const labelsWidth = 120, scaleHeight = 20;
 const rightMargin = 20;
 
 function nomBureau(d) {
-  return `Bureau n°${d.properties.bureau}`;
+  return `Bureau n°${d.bureau}`;
+}
+
+function toTitleCase(str)
+{
+    return str.replace(/\w(\S|[-])*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 }
 
 const DetailPanel = L.Control.extend({
+  initialize: function (scrutinObservable, bureauObservable, options) {
+    L.Util.setOptions(this, options);
+
+    this.scrutinObservable = scrutinObservable;
+    this.bureauObservable = bureauObservable;
+  },
   onAdd: function () {
     const elem = this.elem = select(L.DomUtil.create('div'));
     this.toggleButton = elem.append('button')
@@ -50,6 +47,7 @@ const DetailPanel = L.Control.extend({
 
     const labels = results.append('g')
       .attr('class', 'axis axis--y');
+    const leftTicks = labels.append('g');
 
     const axis = results.append('g')
       .attr('class', 'axis axis--x')
@@ -58,38 +56,38 @@ const DetailPanel = L.Control.extend({
     const x = scaleLinear().rangeRound([0, width]);
     const y = scaleBand().rangeRound([0, height]).padding(0.1);
 
-    this.draw = function draw(feature) {
-      title.text(nomBureau(feature));
+    function draw([bureau, scrutin]) {
+      title.text(nomBureau(bureau));
 
-      const votes = feature.properties.votes;
-      const exprimes = feature.properties.statistiques.exprimes;
+      const resultats = bureau[scrutin];
+      const candidats = resultats.candidats.slice(0, 5);
 
-      const candidats = Object.keys(votes).sort(function (a, b) {
-        return votes[a] - votes[b];
-      }).reverse().slice(0, 5);
+      const barData = candidats.map(c => ({
+        id: `${c.nuance}/${c.nom}/${c.prenom}`,
+        label: toTitleCase(c.nom),
+        score: c.voix / resultats.exprimes,
+        votes: c.voix,
+        nuance: c.nuance
+      }));
 
-      const barData = candidats.map(function (c) {
-        return {candidat: c, score: votes[c] / exprimes, votes: votes[c]};
-      });
-
-      const abstentionExprimes = feature.properties.statistiques.abstentions / feature.properties.statistiques.exprimes;
-      const correctifAbstention = feature.properties.statistiques.exprimes / feature.properties.statistiques.inscrits;
+      const abstentionExprimes = (resultats.inscrits - resultats.votants) / resultats.exprimes;
+      const correctifAbstention = resultats.exprimes / resultats.inscrits;
 
       barData.push({
-        candidat: 'Abstention',
+        id: 'abstention',
+        label: '% inscrits',
         score: abstentionExprimes,
-        votes: feature.properties.statistiques.abstentions
+        votes: resultats.inscrits - resultats.votants,
+        nuance: 'Abstention'
       });
 
-      y.domain(barData.map(d => d.candidat));
+      y.domain(barData.map(d => d.id));
       x.domain([0, Math.max(0.25, barData[0].score, abstentionExprimes)]);
 
-      labels.call(axisLeft(y));
+      leftTicks.call(axisLeft(y).tickFormat(() => ''));
       axis.call(axisBottom(x).ticks(5, '%'));
 
-      const bars = results.selectAll('.bar').data(barData, function (d) {
-        return d.candidat;
-      });
+      const bars = results.selectAll('.bar').data(barData, d => d.id);
 
       bars.enter()
         .append('rect')
@@ -97,21 +95,47 @@ const DetailPanel = L.Control.extend({
         .attr('x', 0)
         .merge(bars)
         .attr('y', function (d) {
-          return y(d.candidat);
+          return y(d.id);
         })
         .attr('height', y.bandwidth())
         .attr('width', function (d) {
           return x(d.score);
         })
         .attr('fill', function (d) {
-          return barColors[d.candidat];
+          return nuanceColors[d.nuance];
         });
 
       bars.exit().remove();
 
-      const figures = results.selectAll('.figure').data(barData, function (d) {
-        return d.candidat;
-      });
+      const names = labels.selectAll('.name').data(barData,d => d.id);
+
+      names.enter()
+        .append('text')
+        .attr('class', 'name')
+        .attr('x', -10)
+        .merge(names)
+        .attr('y', d => y(d.id) + 0.75 * y.bandwidth())
+        .attr('dy', '.3em')
+        .text(d => d.label);
+
+      names.exit()
+        .remove();
+
+      const nuances = labels.selectAll('.nuance').data(barData, d => d.id);
+
+      nuances.enter()
+        .append('text')
+        .attr('class', 'nuance')
+        .attr('x', -10)
+        .merge(nuances)
+        .attr('y', d => y(d.id) + 0.25 * y.bandwidth())
+        .attr('dy', '.3em')
+        .text(d => d.nuance);
+
+      nuances.exit()
+        .remove();
+
+      const figures = results.selectAll('.figure').data(barData, d => d.id);
 
       figures.enter()
         .append('text')
@@ -120,11 +144,9 @@ const DetailPanel = L.Control.extend({
         .attr('dy', '.3em')
         .merge(figures)
         .text(d => {
-          if (d.candidat === 'Abstention')
-            return `${percentFormat(d.score * correctifAbstention)} ins. (${intFormat(d.votes)})`;
-          return `${percentFormat(d.score)} (${intFormat(d.votes)})`;
+          return `${percentFormat(d.id === 'abstention' ? d.score * correctifAbstention : d.score)} (${intFormat(d.votes)})`;
         })
-        .attr('y', d => y(d.candidat) + y.bandwidth() / 2)
+        .attr('y', d => y(d.id) + y.bandwidth() / 2)
         .attr('x', function (d) {
           if (this.getBBox().width + 10 > x(d.score)) {
             return x(d.score);
@@ -136,9 +158,11 @@ const DetailPanel = L.Control.extend({
         });
 
       figures.exit().remove();
-    };
+    }
 
-    addListener(this.draw);
+    this.subscription = Observable
+      .combineLatest(this.bureauObservable, this.scrutinObservable)
+      .subscribe(draw);
 
     return elem.node();
   },
@@ -151,10 +175,10 @@ const DetailPanel = L.Control.extend({
   },
 
   onRemove: function () {
-    removeListener(this.draw);
+    this.subscription.unsubscribe();
   }
 });
 
-export default function (opts) {
-  return new DetailPanel(opts);
+export default function (scrutinObservable, bureauObservable, options) {
+  return new DetailPanel(scrutinObservable, bureauObservable, options);
 }

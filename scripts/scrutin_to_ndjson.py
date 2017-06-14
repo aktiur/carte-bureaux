@@ -1,6 +1,7 @@
 import csv
 import json
 import sys
+from operator import itemgetter
 
 headers_correct = {
     'Code du département': 'departement',
@@ -49,7 +50,7 @@ transforms = {
 nuances = {
     "DUPONT-AIGNAN": 'DLR',
     "LE PEN": 'FN',
-    "MACRON": 'LRM',
+    "MACRON": 'REM',
     "HAMON": 'SOC',
     "ARTHAUD": 'EXG',
     "POUTOU": 'EXG',
@@ -82,6 +83,8 @@ def clean_results(in_file, out_file):
                 {f: transforms[f](line[i + j]) if f in transforms else line[i + j] for (j, f) in repeated_pairs})
             if not with_nuance:
                 candidats[-1]['nuance'] = nuances[candidats[-1]['nom']]
+
+        candidats.sort(key=itemgetter('voix'), reverse=True)
 
         json.dump(donnees_bureau, out_file)
         out_file.write('\n')

@@ -36,10 +36,15 @@ json('topology.json', function (err, topology) {
 
   map.createPane('circles');
 
-  const carteLayer = carte(secteurs).addTo(map);
-  selector({position: 'topright'}).addTo(map);
-  legend({position: 'bottomleft'}).addTo(map);
-  details({position: 'bottomright'}).addTo(map);
+  const selectorLayer = selector({position: 'topright'});
+  const carteLayer = carte(secteurs, selectorLayer.metricObservable);
+  const legendLayer = legend(selectorLayer.metricObservable, {position: 'bottomleft'});
+  const detailsLayer = details(selectorLayer.scrutinObservable, carteLayer.bureauObservable, {position: 'bottomright'});
+
+  carteLayer.addTo(map);
+  selectorLayer.addTo(map);
+  legendLayer.addTo(map);
+  detailsLayer.addTo(map);
 
   const bureaux = L.geoJSON(
     feature(topology, topology.objects.bureaux),

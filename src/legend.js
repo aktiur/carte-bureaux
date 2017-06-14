@@ -1,9 +1,13 @@
 import './legend.css';
-import {addListener, removeListener} from './selector';
 import {select} from 'd3-selection';
 
 
 const Legend = L.Control.extend({
+  initialize: function(metricObservable, options) {
+    this.metricObservable = metricObservable;
+    L.Util.setOptions(this, options);
+  },
+
   onAdd: function () {
     const div = select(L.DomUtil.create('div'))
       .attr('class', 'legend');
@@ -24,7 +28,7 @@ const Legend = L.Control.extend({
 
     let g = null;
 
-    this.updateLegend = function(metric) {
+    function updateLegend(metric) {
       if (g) { g.remove(); }
 
       g = svg.append('g')
@@ -38,16 +42,16 @@ const Legend = L.Control.extend({
         .shapePadding(10);
 
       g.call(legend);
-    };
+    }
 
-    addListener(this.updateLegend);
+    this.subscription = this.metricObservable.subscribe((metric) => setTimeout(() => updateLegend(metric), 0));
 
     return div.node();
   },
 
   onRemove: function(){
-    removeListener(this.updateLegend);
+    this.subscription.unsubscribe();
   }
 });
 
-export default function(opts) { return new Legend(opts); }
+export default function(metricObservable, opts) { return new Legend(metricObservable, opts); }
