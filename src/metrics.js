@@ -1,8 +1,8 @@
 import {extent, max} from 'd3-array';
-import {scaleSqrt} from 'd3-scale';
+import {scaleSqrt, scaleOrdinal} from 'd3-scale';
 import {legendColor} from 'd3-svg-legend';
 
-import {percentFormat, NaNColor, nuanceMetrics, abstentionMetricParameters} from './config';
+import {percentFormat, NaNColor, nuanceMetrics, abstentionMetricParameters, nuanceColors} from './config';
 
 /* une métrique définit :
  *
@@ -81,4 +81,20 @@ const abstentionMetric = Object.assign(
   }
 );
 
-export default votesMetrics.concat([abstentionMetric]);
+const premierScale = window.premierScale = scaleOrdinal()
+  .domain(Object.keys(nuanceColors))
+  .range(Object.values(nuanceColors));
+
+const premierMetric = Object.assign(
+  new Metric({scale: premierScale, dotScale: null}),
+  {
+    label: '1er',
+    _getValue(d) {
+      return d.candidats[0].nuance;
+    },
+    init: function() {},
+    getDotSize: () => 0
+  }
+);
+
+export default votesMetrics.concat([abstentionMetric, premierMetric]);
