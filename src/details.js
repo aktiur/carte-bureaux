@@ -3,7 +3,7 @@ import {axisLeft, axisBottom} from 'd3-axis';
 import {select} from 'd3-selection';
 import {Observable} from 'rxjs/Observable';
 
-import {percentFormat, intFormat, nuanceColors} from './config';
+import {percentFormat, intFormat, nuanceColors, ecartementNomsNuances} from './config';
 
 import './details.css';
 
@@ -104,9 +104,9 @@ const DetailPanel = L.Control.extend({
       names.enter()
         .append('text')
         .attr('class', 'name')
-        .attr('x', -10)
+        .attr('x', -5)
         .merge(names)
-        .attr('y', d => y(d.id) + 0.75 * y.bandwidth())
+        .attr('y', d => y(d.id) + (1+ecartementNomsNuances) / 2 * y.bandwidth())
         .attr('dy', '.3em')
         .text(d => d.label);
 
@@ -115,12 +115,13 @@ const DetailPanel = L.Control.extend({
 
       const nuances = labels.selectAll('.nuance').data(barData, d => d.id);
 
+
       nuances.enter()
         .append('text')
         .attr('class', 'nuance')
-        .attr('x', -10)
+        .attr('x', -5)
         .merge(nuances)
-        .attr('y', d => y(d.id) + 0.25 * y.bandwidth())
+        .attr('y', d => y(d.id) + (1-ecartementNomsNuances) / 2 * y.bandwidth())
         .attr('dy', '.3em')
         .text(d => d.nuance);
 

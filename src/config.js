@@ -25,7 +25,9 @@ export const baseCircleSize = 15;
 export const basePower = 1.7;
 export const baseZoomLevel = 15;
 
-export const tileURL = "http://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
+export const ecartementNomsNuances = 0.30;
+
+export const tileURL = "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 export const NaNColor = 'rgb(255,255,255)';
 
