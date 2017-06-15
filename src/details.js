@@ -7,8 +7,8 @@ import {percentFormat, intFormat, nuanceColors} from './config';
 
 import './details.css';
 
-const width = 260, height = 300;
-const labelsWidth = 120, scaleHeight = 20;
+const width = 260, height = 260;
+const labelsWidth = 120;
 const rightMargin = 20;
 
 function nomBureau(d) {
@@ -40,18 +40,13 @@ const DetailPanel = L.Control.extend({
 
     const graph = elem.append('svg')
       .attr('width', width + labelsWidth + rightMargin)
-      .attr('height', height + scaleHeight);
+      .attr('height', height);
 
     const results = graph.append('g')
       .attr('transform', `translate(${labelsWidth},0)`);
 
     const labels = results.append('g')
       .attr('class', 'axis axis--y');
-    const leftTicks = labels.append('g');
-
-    const axis = results.append('g')
-      .attr('class', 'axis axis--x')
-      .attr('transform', `translate(0,${height})`);
 
     const x = scaleLinear().rangeRound([0, width]);
     const y = scaleBand().rangeRound([0, height]).padding(0.1);
@@ -83,9 +78,6 @@ const DetailPanel = L.Control.extend({
 
       y.domain(barData.map(d => d.id));
       x.domain([0, Math.max(0.25, barData[0].score, abstentionExprimes)]);
-
-      leftTicks.call(axisLeft(y).tickFormat(() => ''));
-      axis.call(axisBottom(x).ticks(5, '%'));
 
       const bars = results.selectAll('.bar').data(barData, d => d.id);
 
