@@ -11,7 +11,6 @@ CIRCOS_DIST_TOPOLOGY := $(addprefix dist/,$(addsuffix /topology.json,$(CIRCOS)))
 CIRCOS_DIR := $(addprefix dist/,$(CIRCOS))
 
 
-
 all: $(CIRCOS_DIR) $(CIRCOS_INDEX) $(CIRCOS_DIST_TOPOLOGY) dist/images
 
 $(CIRCOS_DIR) data/circos:
@@ -47,7 +46,7 @@ data/circos/bureaux-75-complet.geojson: data/bureaux_paris.ndjson |data/circos
 	ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' < $< > $@
 
 $(CIRCOS_PARIS_BUREAUX): data/circos/bureaux-75-%.geojson: data/bureaux_paris.ndjson |data/circos
-	ndjson-filter 'd.properties.circonscription === +"$*"' < $< \
+	ndjson-filter 'd.properties.circonscription === "$*"' < $< \
 	| ndjson-reduce 'p.features.push(d), p' '{type: "FeatureCollection", features: []}' > $@
 
 data/circos/secteurs-75-complet.geojson: data/secteurs_paris.ndjson |data/circos
@@ -89,6 +88,8 @@ data/legislatives.ndjson: raw/data_gouv_fr/Leg_2017_Resultats_BVT_T1_c.txt
 # presidentielle
 data/presidentielle.ndjson: raw/data_gouv_fr/PR17_BVot_T1_FE.txt
 	python scripts/scrutin_to_ndjson.py $< > $@
+
+# fichiers annexes
 
 data/2017_pres_cleaned.csv: raw/data_gouv_fr/PR17_BVot_T1_FE.txt scripts/clean_pres_2017.py
 	python scripts/clean_pres_2017.py $< > $@

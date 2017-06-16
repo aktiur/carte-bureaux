@@ -1,5 +1,4 @@
 import {scaleLinear, scaleBand} from 'd3-scale';
-import {axisLeft, axisBottom} from 'd3-axis';
 import {select} from 'd3-selection';
 import {Observable} from 'rxjs/Observable';
 
