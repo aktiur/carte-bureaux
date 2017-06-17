@@ -81,9 +81,11 @@ const abstentionMetric = Object.assign(
   }
 );
 
+const nuances = Object.keys(nuanceColors);
+
 const premierScale = window.premierScale = scaleOrdinal()
-  .domain(Object.keys(nuanceColors))
-  .range(Object.values(nuanceColors));
+  .domain(nuances)
+  .range(nuances.map(n => nuanceColors[n]));
 
 const premierMetric = Object.assign(
   new Metric({scale: premierScale, dotScale: null}),
