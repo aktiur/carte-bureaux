@@ -28,6 +28,7 @@ export const baseZoomLevel = 15;
 export const ecartementNomsNuances = 0.30;
 
 export const tileURL = "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
+export const tileAttribution = '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
 
 export const NaNColor = 'rgb(200,200,200)';
 

@@ -12,7 +12,7 @@ import selector from './selector';
 import legend from './legend';
 import carte from './carte';
 import details from './details';
-import {tileURL} from './config';
+import {tileURL, tileAttribution} from './config';
 
 
 json('topology.json', function (err, topology) {
@@ -32,7 +32,7 @@ json('topology.json', function (err, topology) {
   const secteurs = feature(topology, topology.objects.secteurs);
 
   const map = L.map('app').fitBounds(leafletBounds)
-    .addLayer(L.tileLayer(tileURL));
+    .addLayer(L.tileLayer(tileURL, {attribution: tileAttribution}));
 
   map.createPane('circles');
 
