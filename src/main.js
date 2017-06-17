@@ -38,13 +38,16 @@ json('topology.json', function (err, topology) {
 
   const selectorLayer = selector({position: 'topright'});
   const carteLayer = carte(secteurs, selectorLayer.metricObservable);
-  const legendLayer = legend(selectorLayer.metricObservable, {position: 'bottomleft'});
-  const detailsLayer = details(selectorLayer.scrutinObservable, carteLayer.bureauObservable, {position: 'bottomright'});
 
   carteLayer.addTo(map);
   selectorLayer.addTo(map);
-  legendLayer.addTo(map);
-  detailsLayer.addTo(map);
+
+  if (! L.Browser.mobile) {
+    const detailsLayer = details(selectorLayer.scrutinObservable, carteLayer.bureauObservable, {position: 'bottomright'});
+    const legendLayer = legend(selectorLayer.metricObservable, {position: 'bottomleft'});
+    detailsLayer.addTo(map);
+    legendLayer.addTo(map);
+  }
 
   const bureaux = L.geoJSON(
     feature(topology, topology.objects.bureaux),
@@ -54,7 +57,11 @@ json('topology.json', function (err, topology) {
 
       }
     }
-  ).addTo(map);
+  );
+
+  if (topology.objects.bureaux.geometries.length <= 50) {
+    bureaux.addTo(map);
+  }
 
   const hlms = feature(topology, topology.objects.hlms);
   hlms.features.sort((a, b) => a > b ? -1 : a < b ? -1 : 0);

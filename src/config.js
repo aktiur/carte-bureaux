@@ -29,7 +29,7 @@ export const ecartementNomsNuances = 0.30;
 
 export const tileURL = "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-export const NaNColor = 'rgb(255,255,255)';
+export const NaNColor = 'rgb(200,200,200)';
 
 export const scrutins = [
   {label: 'Légis.', selector: 'legislatives'},

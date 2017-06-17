@@ -12,16 +12,6 @@ const Legend = L.Control.extend({
     const div = select(L.DomUtil.create('div'))
       .attr('class', 'legend');
 
-    this.toggleButton = div.append('button')
-      .attr('class', 'toggle')
-      .text('>>')
-      .on('touchstart', function() {
-        div.classed('touched', true);
-      })
-      .on('touchend', function() {
-        div.classed('touched', false);
-      });
-
     const svg = div.append('svg')
       .attr('width', 130)
       .attr('height', 250);
