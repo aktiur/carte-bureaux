@@ -16,8 +16,8 @@ all: $(CIRCOS_DIR) $(CIRCOS_INDEX) $(CIRCOS_DIST_TOPOLOGY) dist/images
 $(CIRCOS_DIR) data/circos:
 	mkdir -p $@
 
-$(CIRCOS_INDEX): index.html
-	cp $< $@
+$(CIRCOS_INDEX): dist/%/index.html: index.html
+	code_circo=$* python scripts/process_template.py $< > $@
 
 dist/images: images/
 	cp -r $< $@
