@@ -6,17 +6,16 @@ import {percentFormat, intFormat, nuanceColors, ecartementNomsNuances} from './c
 
 import './details.css';
 
-const width = 260, height = 260;
-const labelsWidth = 120;
-const rightMargin = 20;
+const maxBarWidth = 80;
 
 function nomBureau(d) {
   return `Bureau n°${d.bureau}`;
 }
 
-function toTitleCase(str)
-{
-    return str.replace(/\w(\S|[-])*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+function toTitleCase(str) {
+  return str.replace(/\w(\S|[-])*/g, function (txt) {
+    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
 }
 
 const DetailPanel = L.Control.extend({
@@ -37,119 +36,85 @@ const DetailPanel = L.Control.extend({
 
     const title = elem.append('h2').text('Détails...');
 
-    const graph = elem.append('svg')
-      .attr('width', width + labelsWidth + rightMargin)
-      .attr('height', height);
+    const table = elem.append('table').attr('class', 'hide');
 
-    const results = graph.append('g')
-      .attr('transform', `translate(${labelsWidth},0)`);
+    table.append('caption').text("Scores des candidats en % des exprimés, de l'abstention en % des inscrits");
 
-    const labels = results.append('g')
-      .attr('class', 'axis axis--y');
+    const header = table.append('thead').append('tr');
 
-    const x = scaleLinear().rangeRound([0, width]);
-    const y = scaleBand().rangeRound([0, height]).padding(0.1);
+    [
+      ['nuance', ''],
+      ['candidat', 'Candidat'],
+      ['votes', 'Voix'],
+      ['pourcentage', '%'],
+      ['bar', '']
+    ].map(([c, l]) => {
+      header.append('th')
+        .text(l)
+        .attr('class', c);
+    });
+
+    const tbody = table.append('tbody');
+
+    const x = scaleLinear().rangeRound([0, maxBarWidth]);
 
     function draw([bureau, scrutin]) {
       title.text(nomBureau(bureau));
 
-      const resultats = bureau[scrutin];
-      const candidats = resultats.candidats.slice(0, 5);
+      table.classed('hide', false);
 
-      const barData = candidats.map(c => ({
+      const resultats = bureau[scrutin];
+      const candidats = resultats.candidats.slice(0, 8);
+
+      const data = candidats.map(c => ({
         id: `${c.nuance}/${c.nom}/${c.prenom}`,
         label: toTitleCase(c.nom),
+        pourcentage: percentFormat(c.voix / resultats.exprimes),
+        votes: intFormat(c.voix),
         score: c.voix / resultats.exprimes,
-        votes: c.voix,
         nuance: c.nuance
       }));
 
-      const abstentionExprimes = (resultats.inscrits - resultats.votants) / resultats.exprimes;
-      const correctifAbstention = resultats.exprimes / resultats.inscrits;
+      const abstention = resultats.inscrits - resultats.votants;
+      const abstentionInscrits = abstention / resultats.inscrits;
+      const abstentionExprimes = abstention / resultats.exprimes;
 
-      barData.push({
+      data.push({
         id: 'abstention',
-        label: '% inscrits',
+        label: '-',
+        pourcentage: percentFormat(abstentionInscrits),
+        votes: intFormat(abstention),
         score: abstentionExprimes,
-        votes: resultats.inscrits - resultats.votants,
         nuance: 'Abstention'
       });
 
-      y.domain(barData.map(d => d.id));
-      x.domain([0, Math.max(0.25, barData[0].score, abstentionExprimes)]);
+      x.domain([0, Math.max(0.25, data[0].score, abstentionExprimes)]);
 
-      const bars = results.selectAll('.bar').data(barData, d => d.id);
+      const lignes = tbody.selectAll('tr').data(data, d => d.id);
 
-      bars.enter()
-        .append('rect')
-        .attr('class', 'bar')
-        .attr('x', 0)
-        .merge(bars)
-        .attr('y', function (d) {
-          return y(d.id);
-        })
-        .attr('height', y.bandwidth())
-        .attr('width', function (d) {
-          return x(d.score);
-        })
-        .attr('fill', function (d) {
-          return nuanceColors[d.nuance];
-        });
+      // enter phase
+      const lignesEnter = lignes.enter()
+        .append('tr')
+        .attr('class', d => d.nuance);
 
-      bars.exit().remove();
-
-      const names = labels.selectAll('.name').data(barData,d => d.id);
-
-      names.enter()
-        .append('text')
-        .attr('class', 'name')
-        .attr('x', -5)
-        .merge(names)
-        .attr('y', d => y(d.id) + (1+ecartementNomsNuances) / 2 * y.bandwidth())
-        .attr('dy', '.3em')
-        .text(d => d.label);
-
-      names.exit()
-        .remove();
-
-      const nuances = labels.selectAll('.nuance').data(barData, d => d.id);
-
-
-      nuances.enter()
-        .append('text')
+      lignesEnter.append('th')
+        .text(d => d.nuance)
         .attr('class', 'nuance')
-        .attr('x', -5)
-        .merge(nuances)
-        .attr('y', d => y(d.id) + (1-ecartementNomsNuances) / 2 * y.bandwidth())
-        .attr('dy', '.3em')
-        .text(d => d.nuance);
+        .style('color', d => nuanceColors[d.nuance]);
+      lignesEnter.append('td').text(d => d.label).attr('class', 'candidat');
+      lignesEnter.append('td').attr('class', 'votes');
+      lignesEnter.append('td').attr('class', 'pourcentage');
+      lignesEnter.append('td').append('div').attr('class', 'bar');
 
-      nuances.exit()
-        .remove();
+      const lignesUpdate = lignesEnter.merge(lignes).order();
 
-      const figures = results.selectAll('.figure').data(barData, d => d.id);
+      lignesUpdate.select('.votes').text(d => d.votes);
+      lignesUpdate.select('.pourcentage').text(d => d.pourcentage);
+      lignesUpdate.select('.bar')
+        .style('width', d => x(d.score) + 'px')
+        .style('background-color', d => nuanceColors[d.nuance]);
 
-      figures.enter()
-        .append('text')
-        .attr('class', 'figure')
-        .attr('dx', 10)
-        .attr('dy', '.3em')
-        .merge(figures)
-        .text(d => {
-          return `${percentFormat(d.id === 'abstention' ? d.score * correctifAbstention : d.score)} (${intFormat(d.votes)})`;
-        })
-        .attr('y', d => y(d.id) + y.bandwidth() / 2)
-        .attr('x', function (d) {
-          if (this.getBBox().width + 10 > x(d.score)) {
-            return x(d.score);
-          }
-          return 0;
-        })
-        .classed('out', function (d) {
-          return this.getBBox().width + 10 > x(d.score);
-        });
-
-      figures.exit().remove();
+      lignes.exit().remove();
     }
 
     this.subscription = Observable

@@ -48,7 +48,7 @@ transforms = {
 }
 
 nuances = {
-    "DUPONT-AIGNAN": 'DLR',
+    "DUPONT-AIGNAN": 'DLF',
     "LE PEN": 'FN',
     "MACRON": 'REM',
     "HAMON": 'SOC',
