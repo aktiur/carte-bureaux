@@ -2,7 +2,7 @@ import {scaleLinear, scaleBand} from 'd3-scale';
 import {select} from 'd3-selection';
 import {Observable} from 'rxjs/Observable';
 
-import {percentFormat, intFormat, nuanceColors, ecartementNomsNuances} from './config';
+import {percentFormat, intFormat, nuanceColors} from './config';
 
 import './details.css';
 
@@ -28,9 +28,18 @@ const DetailPanel = L.Control.extend({
   onAdd: function () {
     const elem = this.elem = select(L.DomUtil.create('div'));
     this.toggleButton = elem.append('button')
-      .attr('class', 'toggle')
-      .text('>>')
-      .on('click', () => this.toggle());
+      .attr('class', 'toggle');
+
+    if (L.Browser.mobile) {
+      this.toggleButton
+        .on('touchstart', () => this.toggle(false))
+        .on('touchend', () => this.toggle(true));
+      setTimeout(() => this.toggle(true), 0);
+    } else {
+      this.toggleButton
+        .on('click', () => this.toggle());
+      this.toggle(false);
+    }
 
     elem.attr('class', 'details');
 
@@ -124,11 +133,11 @@ const DetailPanel = L.Control.extend({
     return elem.node();
   },
 
-  toggle() {
-    const state = this.elem.classed('hide');
+  toggle(hide) {
+    hide = hide === undefined ? !this.elem.classed('hide') : hide;
     this.elem
-      .classed('hide', !this.elem.classed('hide'));
-    this.toggleButton.text(state ? ">>" : "<<");
+      .classed('hide', hide);
+    this.toggleButton.text(hide ? "<<" : ">>");
   },
 
   onRemove: function () {

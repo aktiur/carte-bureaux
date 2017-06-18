@@ -6,15 +6,6 @@
     position: relative;
 }
 
-.details .axis--y .name {
-    text-anchor: end;
-}
-
-.details .axis--y .nuance {
-    text-anchor: end;
-    font-weight: bolder;
-}
-
 .details.hide {
     padding: 0;
 }

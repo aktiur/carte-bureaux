@@ -8,3 +8,7 @@ html, body, #app {
 .leaflet-circles-pane {
     z-index: 450;
 }
+
+.leaflet-myposition-pane {
+    z-index: 475;
+}

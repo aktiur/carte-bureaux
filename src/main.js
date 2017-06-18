@@ -20,10 +20,6 @@ json('topology.json', function (err, topology) {
     throw err;
   }
 
-  if (L.Browser.mobile) {
-    select('body').classed('mobile', true);
-  }
-
   const leafletBounds = L.latLngBounds(
     [topology.bbox[1], topology.bbox[0]],
     [topology.bbox[3], topology.bbox[2]]
@@ -35,17 +31,18 @@ json('topology.json', function (err, topology) {
     .addLayer(L.tileLayer(tileURL, {attribution: tileAttribution}));
 
   map.createPane('circles');
+  map.createPane('myposition');
 
   const selectorLayer = selector({position: 'topright'});
   const carteLayer = carte(secteurs, selectorLayer.metricObservable);
+  const detailsLayer = details(selectorLayer.scrutinObservable, carteLayer.bureauObservable, {position: 'bottomright'});
 
   carteLayer.addTo(map);
   selectorLayer.addTo(map);
+  detailsLayer.addTo(map);
 
   if (! L.Browser.mobile) {
-    const detailsLayer = details(selectorLayer.scrutinObservable, carteLayer.bureauObservable, {position: 'bottomright'});
     const legendLayer = legend(selectorLayer.metricObservable, {position: 'bottomleft'});
-    detailsLayer.addTo(map);
     legendLayer.addTo(map);
   }
 
@@ -85,6 +82,25 @@ json('topology.json', function (err, topology) {
     null,
     {'Secteurs': carteLayer, 'Bureaux': bureaux, 'Logements sociaux': hlmLayer},
     {position: 'topleft'}).addTo(map);
+
+
+  if(L.Browser.mobile) {
+    map.locate({watch: true});
+    map.on('locationfound', onLocationFound);
+
+    let marker = null;
+
+    function onLocationFound(e) {
+      if(marker !== null) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.circleMarker(
+          e.latlng,
+          {color: '#2413bf', fillColor: '#82bbc8', fillOpacity: 0.7, radius: 4, pane: 'myposition'})
+          .addTo(map);
+      }
+    }
+  }
 
   window.map = map;
 });
