@@ -1,7 +1,10 @@
+cloudpickle==0.3.1
+doit==0.30.3
 Jinja2==2.9.6
 MarkupSafe==1.0
 numpy==1.12.1
 pandas==0.20.1
+pyinotify==0.9.6
 python-dateutil==2.6.0
 pytz==2017.2
 Shapely==1.5.17

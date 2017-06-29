@@ -10,9 +10,9 @@ COLONNES = {
 
 def clean_bureaux(in_file, r_file, out_file):
     df = pd.read_csv(in_file, sep=';').rename(columns=COLONNES)
-    results = pd.read_csv(r_file, usecols=['departement', 'circonscription', 'bureau'], dtype={'departement': str, 'circonscription': str, 'bureau': str})
+    results = pd.read_csv(r_file, usecols=['departement', 'circonscription', 'bureau'], dtype={'departement': str, 'bureau': str})
 
-    corr_circo = results[results.departement == '75'].set_index('bureau')['circonscription']
+    corr_circo = results[results.departement == '75'].drop_duplicates().set_index('bureau')['circonscription']
 
     # normaliser le numéro de bureau de vote sur 4 caractères
     elem_bureaux = df['Identifiant du bureau de vote'].str.split('-')
