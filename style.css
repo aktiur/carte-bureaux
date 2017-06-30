@@ -2,10 +2,15 @@ html, body, #app {
     margin: 0;
     height: 100vh;
     width: 100vw;
+    font-family: 'Muli', sans-serif;
 }
 
 .leaflet-circles-pane {
     z-index: 450;
+}
+
+.leaflet-myposition-pane {
+    z-index: 475;
 }
 /* required styles */
 
@@ -696,17 +701,8 @@ html, body, #app {
     max-width: 400px;
     padding: 0;
     border: 1px solid black;
-    background-color: rgba(255,255,255,.7);
+    background-color: rgba(255,255,255,1);
     position: relative;
-}
-
-.details .axis--y .name {
-    text-anchor: end;
-}
-
-.details .axis--y .nuance {
-    text-anchor: end;
-    font-weight: bolder;
 }
 
 .details.hide {
@@ -724,7 +720,7 @@ html, body, #app {
     top: 0;
     right: 0;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: 0;
     border: none;
 }
 
@@ -738,15 +734,51 @@ html, body, #app {
     text-align: center;
 }
 
-.details .figure {
-    fill: white;
-    stroke: black;
-    stroke-width: 0.5;
-    font-size: 20px;
-    font-weight: bold;
+.details table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    margin: 0.5em;
 }
 
-.details .figure.out {
-    fill: black;
-    stroke: none;
+.details .hide {
+    display: none;
+}
+
+.details caption {
+    caption-side: bottom;
+}
+
+.details thead tr th:not(:first-child) {
+    border-bottom: 1px #999999 solid;
+    font-weight: 900;
+}
+
+.details .nuance {
+    text-align: right;
+    font-weight: 900;
+}
+
+.details tbody .pourcentage, .details tbody .votes {
+    text-align: right;
+    font-family: "Droid Sans Mono", monospace;
+}
+
+.details thead .candidat {
+    text-align: left;
+}
+
+.details thead .pourcentage, .details thead .votes {
+    text-align: right;
+}
+
+.details div.bar {
+    height: 1em;
+}
+
+.details th, .details td {
+    padding: 0 0.5em;
+}
+
+.details tr.Abstention td {
+   border-top: 1px #999999 solid;
 }
