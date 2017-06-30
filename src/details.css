@@ -41,7 +41,7 @@
     margin: 0.5em;
 }
 
-.details table.hide {
+.details .hide {
     display: none;
 }
 

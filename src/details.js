@@ -43,7 +43,11 @@ const DetailPanel = L.Control.extend({
 
     elem.attr('class', 'details');
 
-    const title = elem.append('h2').text('Détails...');
+    const title = elem.append('h2').text('');
+
+    const noDataMessage = elem.append('div')
+      .attr('class', 'hide')
+      .text('Pas de scrutin');
 
     const table = elem.append('table').attr('class', 'hide');
 
@@ -70,6 +74,13 @@ const DetailPanel = L.Control.extend({
     function draw([bureau, scrutin]) {
       title.text(nomBureau(bureau));
 
+      if (bureau[scrutin] === null) {
+        table.classed('hide', true);
+        noDataMessage.classed('hide', false);
+        return;
+      }
+
+      noDataMessage.classed('hide', true);
       table.classed('hide', false);
 
       const resultats = bureau[scrutin];

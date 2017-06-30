@@ -22,13 +22,13 @@ nuances = {
 def gather_bureau(r):
     bureau = (None, None, None)
     resultats_bureau = None
-    candidats_sorter = itemgetter('numero_panneau')
+    candidats_sorter = itemgetter('voix')
 
     for l in r:
         if bureau != (l['departement'], l['commune'], l['bureau']):
             # nouveau bureau: on émet le précédent s'il y en a un
             if resultats_bureau:
-                resultats_bureau['candidats'].sort(key=candidats_sorter)
+                resultats_bureau['candidats'].sort(key=candidats_sorter, reverse=True)
                 yield bureau, json.dumps(resultats_bureau)
 
             # on mémorise la clé du nouveau bureau
@@ -59,7 +59,7 @@ def gather_bureau(r):
         })
 
     if resultats_bureau:
-        resultats_bureau['candidats'].sort(key=candidats_sorter)
+        resultats_bureau['candidats'].sort(key=candidats_sorter, reverse=True)
         yield bureau, json.dumps(resultats_bureau)
 
 

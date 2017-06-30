@@ -2,3 +2,6 @@ data/
 dist/
 node_modules/
 .python-version
+.doit.db
+package-lock.json
+path

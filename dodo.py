@@ -1,7 +1,11 @@
 import os
+from pathlib import Path
 
 # modify path to point to npm utilities
 os.environ['PATH'] = './node_modules/.bin/' + os.pathsep + os.environ['PATH']
+
+# default tasks
+DOIT_CONFIG = {'default_tasks': ['compile_bundle', 'copy_images', 'setup_index', 'make_topology']}
 
 elections = [
     "presidentielle-1",
@@ -23,6 +27,9 @@ resultats_bureaux_tous_scrutins = 'data/bureaux.ndjson'
 # le fichier des secteurs parisiens
 secteurs_paris = 'data/secteurs_paris.ndjson'
 
+# hlm paris
+hlm_paris = 'data/hlms-paris.geojson'
+
 # le fichiers des emplacements des bureaux parisiens nettoyés
 bureaux_paris_csv = 'data/bureaux_paris.csv'
 
@@ -39,40 +46,77 @@ bureaux_par_circo = 'data/circos/bureaux-{circo}.geojson'
 hlms_par_circo = 'data/circos/hlms-{circo}.geojson'
 
 
-def ndjson_to_geojson(src, dest, **kwargs):
-    """Utilitaire pour réduire un fichier ndjson vers un fichier geojson
-    """
-    return {
-        'targets': [dest],
-        'file_dep': [src],
-        'actions': [f"""
-            ndjson-reduce 'p.features.push(d),p' '{{type:"FeatureCollection",features:[]}}' < "{src}" > "{dest}"
-        """],
-        **kwargs
-    }
-
-
-def reduire_par_circo(src, dest, circo):
-    yield {
-        'name': f'{circo:02d}',
-        'targets': [dest],
-        'file_dep': [src],
-        'actions': [f"""
-            ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
-            | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {dest}
-        """]
-    }
-
-
 def task_creer_dossiers():
     yield {
         'basename': 'creer_dossiers',
-        'actions': ['mkdir -p data', 'mkdir -p data/circos']
+        'actions': ['mkdir -p data/circos', 'mkdir -p dist/images']
     }
 
 
+def task_compile_bundle():
+    targets = ['dist/bundle.js', 'dist/style.css']
+
+    exts = ['.css', '.js']
+    src_files = [p for p in Path('src').iterdir() if p.suffix in exts]
+
+    return {
+        'targets': targets,
+        'file_dep': src_files,
+        'actions': ['npm run build']
+    }
+
+
+def task_setup_index():
+    target = 'dist/75-complet/index.html'
+    src = 'index.html'
+
+    yield {
+        'name': '75-complet',
+        'targets': [target],
+        'file_dep': [src],
+        'actions': [
+            'mkdir -p dist/75-complet/',
+            f'''code_circo="complet" asset_path="../" python scripts/process_template.py {src}  > {target}'''
+        ]
+    }
+
+
+def task_make_topology():
+    target = 'dist/75-complet/topology.json'
+    src_files = {
+        'secteurs': 'data/circos/secteurs-75-complet.geojson',
+        'bureaux': 'data/circos/bureaux-75-complet.geojson',
+        'hlms': 'data/circos/hlms-75-complet.geojson'
+    }
+
+    topo_args = ' '.join([f'"{n}={f}"' for n, f in src_files.items()])
+
+    yield {
+        'name': '75-complet',
+        'targets': [target],
+        'file_dep': list(src_files.values()),
+        'actions': ['mkdir -p dist/75-complet', f'geo2topo {topo_args} > {target}']
+    }
+
+
+def task_copy_images():
+    images_dir = Path('images')
+    exts = ['.jpg', '.jpeg', '.png', '.gif']
+    images = [i for i in images_dir.iterdir() if i.suffix.lower() in exts]
+
+    for img in images:
+        dest = Path('dist', 'images', img.name)
+
+        yield {
+            'name': img.name,
+            'file_dep': [img],
+            'targets': [dest],
+            'actions': [f'cp {img} {dest}']
+        }
+
+
 def task_filter_hlms_parisiens():
-    src = 'raw/opendata_paris/logements_sociaux_finances_a_paris.geojson'
+    src = hlm_paris
     for circo in circos_parisiennes:
         circo_code = f'75-{circo:02d}'
         reference = secteurs_par_circo.format(circo=circo_code)
@@ -82,16 +126,17 @@ def task_filter_hlms_parisiens():
             'name': f'{circo:02d}',
             'targets': [target],
             'file_dep': [src, reference],
-            'actions': [f"""
-                python scripts/included_points.py "{src}" "{reference}" \
-                | ndjson-split 'd.features' \
-                | ndjson-filter 'd.properties.nombre_total_de_logements_finances > 5' \
-                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
-            """]
+            'actions': [f"""python scripts/included_points.py "{src}" "{reference}" """]
         }
 
     # pour Paris au complet
-    yield ndjson_to_geojson(src, hlms_par_circo.format(circo='75-complet'), name='complet')
+    target = hlms_par_circo.format(circo='75-complet')
+    yield {
+        'name': 'complet',
+        'targets': [target],
+        'file_dep': [src],
+        'actions': [f'cp {src} {target}']
+    }
 
 
 def task_filtrer_bureaux_parisiens():
@@ -131,6 +176,25 @@ def task_convertir_bureaux_paris_en_geojson():
             | ndjson-map -r _=lodash '{type: "Feature", geometry: JSON.parse(d.geojson), properties: Object.assign({bureaux: d.bureaux.split("/")}, _.omit(d, ["geojson", "bureaux"]))}' \
             > "%s"
         """ % (src, target)]
+    }
+
+
+def task_nettoyer_hlms_paris():
+    """
+
+    :return:
+    """
+    src = 'raw/opendata_paris/logements_sociaux_finances_a_paris.geojson'
+    target = hlm_paris
+
+    return {
+        'targets': [target],
+        'file_dep': [src],
+        'actions': [f"""
+            ndjson-split 'd.features' < {src} \
+            | ndjson-filter 'd.geometry !== null && d.properties.nombre_total_de_logements_finances > 30' \
+            | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
+        """]
     }
 
 
@@ -193,3 +257,30 @@ def task_scrutin_to_ndjson():
             'file_dep': [src],
             'actions': [action]
         }
+
+
+# Utilitaires
+
+def ndjson_to_geojson(src, dest, **kwargs):
+    """Utilitaire pour réduire un fichier ndjson vers un fichier geojson
+    """
+    return {
+        'targets': [dest],
+        'file_dep': [src],
+        'actions': [f"""
+            ndjson-reduce 'p.features.push(d),p' '{{type:"FeatureCollection",features:[]}}' < "{src}" > "{dest}"
+        """],
+        **kwargs
+    }
+
+
+def reduire_par_circo(src, dest, circo):
+    yield {
+        'name': f'{circo:02d}',
+        'targets': [dest],
+        'file_dep': [src],
+        'actions': [f"""
+            ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
+            | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {dest}
+        """]
+    }

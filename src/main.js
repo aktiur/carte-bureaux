@@ -6,7 +6,6 @@ import {json} from 'd3-request';
 import {extent} from 'd3-array';
 import {scaleSqrt} from 'd3-scale';
 import {feature} from 'topojson';
-import {select} from 'd3-selection';
 
 import selector from './selector';
 import legend from './legend';
@@ -60,7 +59,8 @@ json('topology.json', function (err, topology) {
     bureaux.addTo(map);
   }
 
-  const hlms = feature(topology, topology.objects.hlms);
+  const hlms = window.hlms = feature(topology, topology.objects.hlms);
+  console.log(hlms);
   hlms.features.sort((a, b) => a > b ? -1 : a < b ? -1 : 0);
   const hlmSize = scaleSqrt()
     .range([5, 20])

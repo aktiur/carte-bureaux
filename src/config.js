@@ -33,8 +33,10 @@ export const tileAttribution = '&copy; <a href="http://osm.org/copyright">OpenSt
 export const NaNColor = 'rgb(200,200,200)';
 
 export const scrutins = [
-  {label: 'Légis.', selector: 'legislatives'},
-  {label: 'Prés.', selector: 'presidentielle'}
+  {label: 'Légis. 1', selector: 'legislatives-1'},
+  {label: 'Légis. 2', selector: 'legislatives-2'},
+  {label: 'Prés. 1', selector: 'presidentielle-1'},
+  {label: 'Prés. 2', selector: 'presidentielle-2'}
 ];
 
 export const nuanceMetrics = [

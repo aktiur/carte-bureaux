@@ -7,12 +7,13 @@ import 'rxjs/add/observable/combineLatest';
 import metrics from './metrics';
 import {scrutins} from './config';
 import './selector.css';
+import {NaNColor} from './config'
 
 
 const metricWrapper = ([scrutin, metric]) => ({
-  init: data => metric.init(data.map(d => d.properties[scrutin])),
-  getColor: d => metric.getColor(d.properties[scrutin]),
-  getDotSize: d => metric.getDotSize(d.properties[scrutin]),
+  init: data => metric.init(data.map(d => d.properties[scrutin]).filter(d => d !== null)),
+  getColor: d => d.properties[scrutin] === null ? NaNColor : metric.getColor(d.properties[scrutin]),
+  getDotSize: d => d.properties[scrutin] === null ? 0 : metric.getDotSize(d.properties[scrutin]),
   getLegend: () => metric.getLegend()
 });
 
