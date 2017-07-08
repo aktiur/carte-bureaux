@@ -5,7 +5,7 @@ from pathlib import Path
 os.environ['PATH'] = './node_modules/.bin/' + os.pathsep + os.environ['PATH']
 
 # default tasks
-DOIT_CONFIG = {'default_tasks': ['compile_bundle', 'copy_images', 'setup_index', 'make_topology']}
+DOIT_CONFIG = {'default_tasks': ['copy_main_index', 'compile_bundle', 'copy_images', 'setup_map_index', 'make_topology']}
 
 elections = [
     "presidentielle-1",
@@ -14,7 +14,8 @@ elections = [
     "legislatives-2"
 ]
 
-circos_parisiennes = range(1, 19)
+circos_paris = range(1, 19)
+arrondissements_paris = range(1, 21)
 
 # FICHIERS INTERMEDIAIRES
 # =======================
@@ -36,14 +37,14 @@ bureaux_paris_csv = 'data/bureaux_paris.csv'
 # le fichier des bureaux parisiens en geojson
 bureaux_paris_ndjson = 'data/bureaux_paris.ndjson'
 
-# fichier des secteurs par circonscription
-secteurs_par_circo = "data/circos/secteurs-{circo}.geojson"
+# fichier des secteurs par circonscription/arrondissement
+secteurs_par_circo = "data/circos/secteurs-{code}.geojson"
 
-# fichier des bureaux par circo
-bureaux_par_circo = 'data/circos/bureaux-{circo}.geojson'
+# fichier des bureaux par circo/arrondissement
+bureaux_par_circo = 'data/circos/bureaux-{code}.geojson'
 
-# fichier des hlms par circo
-hlms_par_circo = 'data/circos/hlms-{circo}.geojson'
+# fichier des hlms par circo/arrondissement
+hlms_par_circo = 'data/circos/hlms-{code}.geojson'
 
 
 def task_creer_dossiers():
@@ -66,22 +67,68 @@ def task_compile_bundle():
     }
 
 
-def task_setup_index():
+def task_copy_main_index():
+    return {
+        'targets': ['dist/index.html'],
+        'file_dep': ['index.html'],
+        'actions': ['python scripts/process_template.py index.html > dist/index.html']
+    }
+
+
+def task_setup_map_index():
+    src = 'map_index.html'
+
+    for num, type in [(c, 'C') for c in circos_paris] + [(a, 'A') for a in arrondissements_paris]:
+        code = f'75{type}{num:02d}'
+        target = f'dist/{code}/index.html'
+
+        ordinal = '1ère' if num == 1 else f'{num}ème'
+        label = 'circonscription' if type == 'C' else 'arrondissement'
+
+        yield {
+            'name': code,
+            'targets': [target],
+            'file_dep': [src],
+            'actions': [
+                create_dist_dir(code),
+                f'code_circo="Résultats Paris - {ordinal} {label}" asset_path="../"'
+                f' python scripts/process_template.py {src} > {target}'
+            ]
+        }
+
+
     target = 'dist/75-complet/index.html'
-    src = 'index.html'
 
     yield {
         'name': '75-complet',
         'targets': [target],
         'file_dep': [src],
         'actions': [
-            'mkdir -p dist/75-complet/',
-            f'''code_circo="complet" asset_path="../" python scripts/process_template.py {src}  > {target}'''
+            create_dist_dir('75-complet'),
+            f'code_circo="Résultats électoraux à Paris" asset_path="../"'
+            f' python scripts/process_template.py {src}  > {target}'
         ]
     }
 
 
 def task_make_topology():
+    for code in [f'75C{circo:02d}' for circo in circos_paris] + [f'75A{arr:02d}' for arr in arrondissements_paris]:
+        target = f'dist/{code}/topology.json'
+        src_files = {
+            'secteurs': f'data/circos/secteurs-{code}.geojson',
+            'bureaux': f'data/circos/bureaux-{code}.geojson',
+            'hlms': f'data/circos/hlms-{code}.geojson'
+        }
+
+        topo_args = ' '.join([f'"{key}={file}"' for key, file in src_files.items()])
+
+        yield {
+            'name': code,
+            'targets': [target],
+            'file_dep': list(src_files.values()),
+            'actions': [f'mkdir -p dist/{code}', f'geo2topo {topo_args} > {target}']
+        }
+
     target = 'dist/75-complet/topology.json'
     src_files = {
         'secteurs': 'data/circos/secteurs-75-complet.geojson',
@@ -89,7 +136,7 @@ def task_make_topology():
         'hlms': 'data/circos/hlms-75-complet.geojson'
     }
 
-    topo_args = ' '.join([f'"{n}={f}"' for n, f in src_files.items()])
+    topo_args = ' '.join([f'"{key}={file}"' for key, file in src_files.items()])
 
     yield {
         'name': '75-complet',
@@ -115,22 +162,21 @@ def task_copy_images():
         }
 
 
-def task_filter_hlms_parisiens():
+def task_filtrer_hlms_parisiens():
     src = hlm_paris
-    for circo in circos_parisiennes:
-        circo_code = f'75-{circo:02d}'
-        reference = secteurs_par_circo.format(circo=circo_code)
-        target = hlms_par_circo.format(circo=circo_code)
+    for code in [f'75C{c:02d}' for c in circos_paris] + [f'75A{a:02d}' for a in arrondissements_paris]:
+        reference = secteurs_par_circo.format(code=code)
+        target = hlms_par_circo.format(code=code)
 
         yield {
-            'name': f'{circo:02d}',
+            'name': code,
             'targets': [target],
             'file_dep': [src, reference],
-            'actions': [f"""python scripts/included_points.py "{src}" "{reference}" """]
+            'actions': [f"""python scripts/included_points.py "{src}" "{reference}" > {target}"""]
         }
 
     # pour Paris au complet
-    target = hlms_par_circo.format(circo='75-complet')
+    target = hlms_par_circo.format(code='75-complet')
     yield {
         'name': 'complet',
         'targets': [target],
@@ -141,25 +187,67 @@ def task_filter_hlms_parisiens():
 
 def task_filtrer_bureaux_parisiens():
     src = bureaux_paris_ndjson
-    for circo in circos_parisiennes:
-        circo_code = f'75-{circo:02d}'
-        target = bureaux_par_circo.format(circo=circo_code)
-        yield reduire_par_circo(src, target, circo)
+    for circo in circos_paris:
+        circo_code = f'75C{circo:02d}'
+        target = bureaux_par_circo.format(code=circo_code)
+        yield {
+            'name': circo_code,
+            'targets': [target],
+            'file_dep': [src],
+            'actions': [f"""
+                ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
+                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
+            """]
+        }
+
+    for arrondissement in arrondissements_paris:
+        arrondissement_code = f'75A{arrondissement:02d}'
+        target = bureaux_par_circo.format(code=arrondissement_code)
+        yield {
+            'name': arrondissement_code,
+            'targets': [target],
+            'file_dep': [src],
+            'actions': [f"""
+                ndjson-filter 'd.properties.bureaux[0].slice(0,2) === "{arrondissement:02d}"' < {src} \
+                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
+            """]
+        }
 
     # pour Paris au complet
-    target = bureaux_par_circo.format(circo='75-complet')
+    target = bureaux_par_circo.format(code='75-complet')
     yield ndjson_to_geojson(src, target, name='complet')
 
 
 def task_filtrer_secteurs_parisiens():
     src = 'data/secteurs_paris.ndjson'
-    for circo in circos_parisiennes:
-        circo_code = f'75-{circo:02d}'
-        target = secteurs_par_circo.format(circo=circo_code)
-        yield reduire_par_circo(src, target, circo)
+    for circo in circos_paris:
+        circo_code = f'75C{circo:02d}'
+        target = secteurs_par_circo.format(code=circo_code)
+        yield {
+            'name': circo_code,
+            'targets': [target],
+            'file_dep': [src],
+            'actions': [f"""
+                ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
+                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
+            """]
+        }
+
+    for arrondissement in arrondissements_paris:
+        arrondissement_code = f"75A{arrondissement:02d}"
+        target = secteurs_par_circo.format(code=arrondissement_code)
+        yield {
+            'name': arrondissement_code,
+            'targets': [target],
+            'file_dep': [src],
+            'actions': [f"""
+                ndjson-filter 'd.properties.bureau.slice(0,2) === "{arrondissement:02d}"' < {src} \
+                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {target}
+            """]
+        }
 
     # pour Paris au complet
-    target = secteurs_par_circo.format(circo='75-complet')
+    target = secteurs_par_circo.format(code='75-complet')
     yield ndjson_to_geojson(src, target, name='complet')
 
 
@@ -274,13 +362,17 @@ def ndjson_to_geojson(src, dest, **kwargs):
     }
 
 
+def create_dist_dir(code):
+    return f'mkdir -p dist/{code}/'
+
+
 def reduire_par_circo(src, dest, circo):
-    yield {
-        'name': f'{circo:02d}',
-        'targets': [dest],
-        'file_dep': [src],
-        'actions': [f"""
-            ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
-            | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {dest}
-        """]
-    }
+        return {
+            'name': f'C{circo:02d}',
+            'targets': [dest],
+            'file_dep': [src],
+            'actions': [f"""
+                ndjson-filter 'd.properties.circonscription === {circo}' < {src} \
+                | ndjson-reduce 'p.features.push(d), p' '{{type: "FeatureCollection", features: []}}' > {dest}
+            """]
+        }

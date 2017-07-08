@@ -2,16 +2,45 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>{{ code_circo }} &mdash; détails par bureau de votes</title>
-    <link rel="stylesheet" href="{{ asset_path }}style.css">
-    <link href="https://fonts.googleapis.com/css?family=Muli:regular,black|Droid+Sans+Mono" rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="{{ code_circo }}">
+    <title>Liste des cartes</title>
+    <style>
+        li {
+            display: inline;
+            list-style-type: none;
+        }
+
+        li + li:before {
+            content: " • ";
+        }
+    </style>
 </head>
 <body>
- <div id="app"></div>
- <script src="{{ asset_path }}bundle.js"></script>
+<section>
+    <h3>Paris au complet</h3>
+    <p>Cette carte inclut l'ensemble des bureaux parisiens. Elle est trop lourde pour l'utilisation sur portable.</p>
+    <ul>
+        <li><a href="75-complet/">Paris au complet</a></li>
+    </ul>
+</section>
+
+<section>
+    <h3>Par arrondissement</h3>
+    <p>Ces cartes proposent des vues par arrondissement.</p>
+    <ul>
+        {% for i in range(1, 21) %}
+            <li><a href="{{ "75A%02d/" |format(i) }}">{% if i == 1 %}1er{% else %}{{ i }}e{% endif %}</a></li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section>
+    <h3>Par circonscription législative</h3>
+    <p>Il s'agit des circonscriptions électorales utilisées pour les élections législatives.</p>
+    <ul>
+        {% for i in range(1, 19) %}
+            <li><a href="{{ "75C%02d/" |format(i) }}">{% if i == 1 %}1ère{% else %}{{ i }}e{% endif %}</a></li>
+        {% endfor %}
+    </ul>
+</section>
 </body>
 </html>
