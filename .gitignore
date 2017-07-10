@@ -5,3 +5,4 @@ node_modules/
 .doit.db
 package-lock.json
 path
+__pycache__/
